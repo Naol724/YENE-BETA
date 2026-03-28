@@ -7,16 +7,24 @@ const api = axios.create({
   }
 });
 
+const AUTH_STORAGE_KEY = 'renatal_auth';
+
 // Interceptor to add token
 api.interceptors.request.use((config) => {
-  const state = JSON.parse(localStorage.getItem('persist:root') || '{}');
-  if (state.auth) {
-    const auth = JSON.parse(state.auth);
-    if (auth.token && config.headers) {
-      config.headers.Authorization = `Bearer ${auth.token}`;
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (raw && config.headers) {
+      const { token } = JSON.parse(raw) as { token?: string };
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+  } catch {
+    /* ignore */
   }
   return config;
 });
+
+export { AUTH_STORAGE_KEY };
 
 export default api;

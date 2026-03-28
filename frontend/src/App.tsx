@@ -13,6 +13,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 import ListingModeration from './pages/ListingModeration';
 import TransactionMonitoring from './pages/TransactionMonitoring';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   return (
@@ -23,6 +25,9 @@ function App() {
         <main className="flex-1 overflow-auto md:pt-16 pb-16 md:pb-0">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/signup" element={<Register />} />
             <Route path="/search" element={<Search />} />
             <Route path="/house/:id" element={<PropertyDetails />} />
             <Route path="/favorites" element={<Favorites />} />
