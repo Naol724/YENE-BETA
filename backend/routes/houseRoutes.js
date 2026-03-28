@@ -13,16 +13,16 @@ const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/my-listings', protect, authorize('OWNER', 'ADMIN'), getMyListings);
+router.get('/my-listings', protect, authorize('OWNER'), getMyListings);
 router.post('/:id/view', incrementView);
 
 router.route('/')
   .get(getHouses)
-  .post(protect, authorize('OWNER', 'ADMIN'), createHouse);
+  .post(protect, authorize('OWNER'), createHouse);
 
 router.route('/:id')
   .get(getHouse)
-  .put(protect, authorize('OWNER', 'ADMIN'), updateHouse)
-  .delete(protect, authorize('OWNER', 'ADMIN'), deleteHouse);
+  .put(protect, authorize('OWNER'), updateHouse)
+  .delete(protect, authorize('OWNER'), deleteHouse);
 
 module.exports = router;

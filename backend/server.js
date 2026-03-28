@@ -20,7 +20,6 @@ const inquiries = require('./routes/inquiryRoutes');
 const users = require('./routes/userRoutes');
 const favorites = require('./routes/favoriteRoutes');
 const premium = require('./routes/premiumRoutes');
-const admin = require('./routes/adminRoutes');
 
 app.use('/api/auth', auth);
 app.use('/api/houses', houses);
@@ -28,7 +27,6 @@ app.use('/api/inquiries', inquiries);
 app.use('/api/users', users);
 app.use('/api/favorites', favorites);
 app.use('/api/premium', premium);
-app.use('/api/admin', admin);
 
 // Basic Route
 app.get('/', (req, res) => {

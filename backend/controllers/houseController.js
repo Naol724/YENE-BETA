@@ -30,7 +30,7 @@ exports.getHouses = async (req, res) => {
       query = query.where('amenities').all(amenitiesArr);
     }
 
-    // Only show active unless admin/owner requests otherwise
+    // Only show active listings to guests/renters; owners see their own filters via query
     if (!req.user || req.user.role === 'RENTER') {
       query = query.where({ status: 'Active' });
     }
@@ -109,7 +109,7 @@ exports.updateHouse = async (req, res) => {
     if (!house) return res.status(404).json({ success: false, message: 'Property not found' });
 
     // Validate ownership
-    if (house.owner.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (house.owner.toString() !== req.user.id) {
       return res.status(401).json({ success: false, message: 'Not authorized to update this listing' });
     }
 
@@ -134,7 +134,7 @@ exports.deleteHouse = async (req, res) => {
     if (!house) return res.status(404).json({ success: false, message: 'Property not found' });
 
     // Validate ownership
-    if (house.owner.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (house.owner.toString() !== req.user.id) {
       return res.status(401).json({ success: false, message: 'Not authorized to delete this listing' });
     }
 

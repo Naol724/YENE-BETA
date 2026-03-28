@@ -29,6 +29,7 @@ exports.register = async (req, res) => {
       phone,
       password,
       role: normalizedRole,
+      ...(normalizedRole === 'OWNER' ? { isApproved: true } : {}),
     });
 
     user.generateOTP();

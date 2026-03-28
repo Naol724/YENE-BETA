@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
-import { login } from '../store/authSlice';
+import { login, normalizeApiUser } from '../store/authSlice';
 import type { User } from '../store/authSlice';
 import api from '../utils/api';
 import { Home, Loader2 } from 'lucide-react';
 
 function redirectAfterAuth(user: User, navigate: ReturnType<typeof useNavigate>) {
   if (user.role === 'OWNER') navigate('/owner');
-  else if (user.role === 'ADMIN') navigate('/admin');
   else navigate('/');
 }
 
@@ -59,8 +58,9 @@ const Register: React.FC = () => {
         return;
       }
 
-      dispatch(login({ user: data.user, token: data.token }));
-      redirectAfterAuth(data.user, navigate);
+      const user = normalizeApiUser(data.user as Parameters<typeof normalizeApiUser>[0]);
+      dispatch(login({ user, token: data.token }));
+      redirectAfterAuth(user, navigate);
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
         const d = err.response.data as { message?: string };
@@ -146,7 +146,7 @@ const Register: React.FC = () => {
           </div>
 
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-textPrimary mb-2">I am…</legend>
+            <legend className="text-sm font-medium text-textPrimary mb-2">How will you use HouseRental?</legend>
             <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
                 type="radio"
@@ -155,7 +155,7 @@ const Register: React.FC = () => {
                 onChange={() => setRole('RENTER')}
                 className="text-primary focus:ring-primary"
               />
-              <span className="text-sm text-textPrimary">Looking to rent</span>
+              <span className="text-sm text-textPrimary">I’m looking for a place</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
@@ -165,7 +165,7 @@ const Register: React.FC = () => {
                 onChange={() => setRole('OWNER')}
                 className="text-primary focus:ring-primary"
               />
-              <span className="text-sm text-textPrimary">Property owner (list rentals)</span>
+              <span className="text-sm text-textPrimary">I’m listing my property</span>
             </label>
           </fieldset>
 

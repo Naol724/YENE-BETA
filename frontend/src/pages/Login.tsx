@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
-import { login } from '../store/authSlice';
+import { login, normalizeApiUser } from '../store/authSlice';
 import type { User } from '../store/authSlice';
 import api from '../utils/api';
 import { Home, Loader2 } from 'lucide-react';
 
-function redirectAfterAuth(user: User, navigate: ReturnType<typeof useNavigate>) {
+function redirectAfterAuth(
+  user: User,
+  navigate: ReturnType<typeof useNavigate>,
+  fromPath?: string
+) {
+  if (fromPath) {
+    navigate(fromPath, { replace: true });
+    return;
+  }
   if (user.role === 'OWNER') navigate('/owner');
-  else if (user.role === 'ADMIN') navigate('/admin');
   else navigate('/');
 }
 
 const Login: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,8 +48,9 @@ const Login: React.FC = () => {
         return;
       }
 
-      dispatch(login({ user: data.user, token: data.token }));
-      redirectAfterAuth(data.user, navigate);
+      const user = normalizeApiUser(data.user as Parameters<typeof normalizeApiUser>[0]);
+      dispatch(login({ user, token: data.token }));
+      redirectAfterAuth(user, navigate, fromPath);
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
         const d = err.response.data as { message?: string };

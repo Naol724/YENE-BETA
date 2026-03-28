@@ -31,9 +31,6 @@ const Navbar: React.FC = () => {
               {user?.role === 'OWNER' && (
                 <Link to="/owner" className="btn-primary h-10 px-4">Dashboard</Link>
               )}
-              {user?.role === 'ADMIN' && (
-                <Link to="/admin" className="btn-secondary h-10 px-4">Admin</Link>
-              )}
               <button onClick={handleLogout} className="text-error hover:text-red-700 p-2">
                 <LogOut className="h-5 w-5" />
               </button>

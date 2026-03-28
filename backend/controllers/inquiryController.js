@@ -46,13 +46,10 @@ exports.getMyInquiries = async (req, res) => {
 
 // @desc    Owner's received inquiries
 // @route   GET /api/inquiries/received
-// @access  Private (Owner, Admin)
+// @access  Private (Owner)
 exports.getReceivedInquiries = async (req, res) => {
   try {
-    let query = { owner: req.user.id };
-    if (req.user.role === 'ADMIN') {
-      query = {}; // Admin gets all inquiries
-    }
+    const query = { owner: req.user.id };
 
     const inquiries = await Inquiry.find(query)
       .populate('property', 'title images pricing status')
@@ -73,7 +70,7 @@ exports.updateInquiryStatus = async (req, res) => {
     const inquiry = await Inquiry.findById(req.params.id);
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
-    if (inquiry.owner.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (inquiry.owner.toString() !== req.user.id) {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 
@@ -95,7 +92,7 @@ exports.replyToInquiry = async (req, res) => {
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
     // Validate participants
-    if (inquiry.owner.toString() !== req.user.id && inquiry.renter.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+    if (inquiry.owner.toString() !== req.user.id && inquiry.renter.toString() !== req.user.id) {
       return res.status(401).json({ success: false, message: 'Not authorized' });
     }
 

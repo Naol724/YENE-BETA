@@ -1,5 +1,5 @@
 import { configureStore, type Middleware } from '@reduxjs/toolkit';
-import authReducer, { login, logout, type AuthState } from './authSlice';
+import authReducer, { login, logout, normalizeApiUser, type AuthState } from './authSlice';
 import { AUTH_STORAGE_KEY } from '../utils/api';
 
 function loadPersistedAuth(): AuthState | undefined {
@@ -11,7 +11,7 @@ function loadPersistedAuth(): AuthState | undefined {
       user?: AuthState['user'];
     };
     if (token && user?.id) {
-      return { user, token, isAuthenticated: true };
+      return { user: normalizeApiUser(user as Parameters<typeof normalizeApiUser>[0]), token, isAuthenticated: true };
     }
   } catch {
     /* ignore */

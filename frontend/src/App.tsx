@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { ProtectedRoute, OwnerRoute } from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Search from './pages/Search';
 import PropertyDetails from './pages/PropertyDetails';
@@ -9,12 +10,9 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import PremiumUpgrade from './pages/PremiumUpgrade';
 import OwnerListings from './pages/OwnerListings';
 import AddListing from './pages/AddListing';
-import AdminDashboard from './pages/AdminDashboard';
-import UserManagement from './pages/UserManagement';
-import ListingModeration from './pages/ListingModeration';
-import TransactionMonitoring from './pages/TransactionMonitoring';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -30,20 +28,64 @@ function App() {
             <Route path="/signup" element={<Register />} />
             <Route path="/search" element={<Search />} />
             <Route path="/house/:id" element={<PropertyDetails />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/inquiries" element={<Inquiries />} />
-            
-            {/* Owner Routes */}
-            <Route path="/owner" element={<OwnerDashboard />} />
-            <Route path="/owner/premium" element={<PremiumUpgrade />} />
-            <Route path="/owner/listings" element={<OwnerListings />} />
-            <Route path="/owner/listings/new" element={<AddListing />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<UserManagement />} />
-            <Route path="/admin/listings" element={<ListingModeration />} />
-            <Route path="/admin/transactions" element={<TransactionMonitoring />} />
+
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Favorites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inquiries"
+              element={
+                <ProtectedRoute>
+                  <Inquiries />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/owner"
+              element={
+                <OwnerRoute>
+                  <OwnerDashboard />
+                </OwnerRoute>
+              }
+            />
+            <Route
+              path="/owner/premium"
+              element={
+                <OwnerRoute>
+                  <PremiumUpgrade />
+                </OwnerRoute>
+              }
+            />
+            <Route
+              path="/owner/listings"
+              element={
+                <OwnerRoute>
+                  <OwnerListings />
+                </OwnerRoute>
+              }
+            />
+            <Route
+              path="/owner/listings/new"
+              element={
+                <OwnerRoute>
+                  <AddListing />
+                </OwnerRoute>
+              }
+            />
           </Routes>
         </main>
       </div>

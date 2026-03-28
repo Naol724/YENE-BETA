@@ -25,6 +25,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      const url = String(error.config?.url ?? '');
+      const isAuthAttempt = url.includes('/auth/login') || url.includes('/auth/register');
+      if (!isAuthAttempt) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        const path = window.location.pathname;
+        if (!path.startsWith('/login') && !path.startsWith('/register')) {
+          window.location.replace(`/login?session=expired`);
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export { AUTH_STORAGE_KEY };
 
 export default api;

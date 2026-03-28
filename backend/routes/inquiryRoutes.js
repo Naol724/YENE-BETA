@@ -16,9 +16,9 @@ router.use(protect);
 
 router.post('/', authorize('RENTER'), createInquiry);
 router.get('/my-inquiries', authorize('RENTER'), getMyInquiries);
-router.get('/received', authorize('OWNER', 'ADMIN'), getReceivedInquiries);
+router.get('/received', authorize('OWNER'), getReceivedInquiries);
 
-router.patch('/:id', authorize('OWNER', 'ADMIN'), updateInquiryStatus);
+router.patch('/:id', authorize('OWNER'), updateInquiryStatus);
 router.post('/:id/reply', replyToInquiry);
 
 module.exports = router;
