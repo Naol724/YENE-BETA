@@ -1,35 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
 import type { RootState } from '../store';
-import { Search, MapPin, Bell, Filter, Heart } from 'lucide-react';
+import { Search, Filter, User, HelpCircle, MapPin, Users, CloudUpload } from 'lucide-react';
 import api from '../utils/api';
+import PropertyListingCard, { type HouseCardModel } from '../components/PropertyListingCard';
+import SiteFooter from '../components/SiteFooter';
 
-const CATEGORIES = ['All', 'Apartment', 'House', 'Condo', 'Studio'];
+type ListingTab = 'all' | 'rent' | 'sale';
+
+const HERO_BG =
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=80';
+
+const FEATURES = [
+  {
+    icon: User,
+    title: 'User friendly',
+    text: 'Clean layouts and fast flows so you can browse listings, save favorites, and message owners without friction.',
+  },
+  {
+    icon: HelpCircle,
+    title: 'Free support',
+    text: '24/7 help when you need it—questions about listings, owners, or your account.',
+  },
+  {
+    icon: Search,
+    title: 'Advanced search',
+    text: 'Filter by location, price, and bedrooms to narrow down rentals that match your budget and lifestyle.',
+  },
+  {
+    icon: MapPin,
+    title: 'Maps ready',
+    text: 'See where each property sits—perfect for planning commutes and neighborhood checks.',
+  },
+  {
+    icon: Users,
+    title: 'Trusted community',
+    text: 'Owners and renters on one platform with clear roles and moderated listings.',
+  },
+  {
+    icon: CloudUpload,
+    title: 'List in minutes',
+    text: 'Owners can post photos, pricing, and details from the dashboard in a few steps.',
+  },
+];
+
+function badgeForHouse(house: HouseCardModel, tab: ListingTab): 'For Rent' | 'For Sale' | 'Featured' {
+  if (tab === 'sale') return 'For Sale';
+  if (house.isPremium) return 'Featured';
+  return 'For Rent';
+}
 
 const Home: React.FC = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [featured, setFeatured] = useState<any[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
+  const [listingTab, setListingTab] = useState<ListingTab>('all');
+  const [houses, setHouses] = useState<HouseCardModel[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adSlide, setAdSlide] = useState(0);
 
   useEffect(() => {
     const fetchHouses = async () => {
       try {
         setLoading(true);
-        // Fetch Premium properties for Featured
-        const featuredRes = await api.get('/houses?isPremium=true&limit=5');
-        setFeatured(featuredRes.data.data);
-        
-        // Fetch Recent properties based on category
-        let recentUrl = '/houses?limit=8';
-        if (activeCategory !== 'All') {
-          recentUrl += `&propertyType=${activeCategory}`;
-        }
-        const recentRes = await api.get(recentUrl);
-        setRecent(recentRes.data.data);
+        const res = await api.get('/houses?limit=12');
+        setHouses(res.data.data || []);
       } catch (error) {
         console.error('Failed to fetch properties', error);
       } finally {
@@ -37,162 +71,210 @@ const Home: React.FC = () => {
       }
     };
     fetchHouses();
-  }, [activeCategory]);
+  }, []);
+
+  const filteredListings = useMemo(() => {
+    if (listingTab === 'sale') {
+      const premium = houses.filter((h) => h.isPremium);
+      return premium.length ? premium : houses.slice(0, 3);
+    }
+    if (listingTab === 'rent') {
+      return houses.filter((h) => !h.isPremium);
+    }
+    return houses;
+  }, [houses, listingTab]);
+
+  const adImages = [
+    'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80',
+  ];
 
   return (
-    <div className="pb-24 pt-4 px-4 md:px-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
-      {/* Header Section */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-textPrimary">
-            {isAuthenticated ? `Good ${getGreeting()}, ${user?.fullName.split(' ')[0]} 👋` : 'Find Your Dream Home'}
-          </h2>
-          <div className="flex items-center text-textSecondary mt-1 text-sm">
-          </div>
-        </div>
-        <div className="relative cursor-pointer hover:bg-surface p-2 rounded-full transition">
-          <Bell className="h-6 w-6 text-textSecondary" />
-          <span className="absolute top-1 right-2 w-2.5 h-2.5 bg-secondary rounded-full border-2 border-white"></span>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div 
-        onClick={() => navigate('/search')}
-        className="relative group cursor-pointer shadow-sm active:scale-95 transition-transform duration-200"
-      >
-        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400 group-hover:text-primary transition-colors" />
-        </div>
-        <input 
-          type="text" 
-          placeholder="Search by location, price..." 
-          className="input-field pl-12 pr-12 rounded-full shadow-sm group-hover:shadow-md transition-shadow cursor-pointer"
-          readOnly
+    <div className="animate-fade-in bg-white">
+      <section className="relative min-h-[420px] md:min-h-[520px] flex items-center justify-center px-4 py-16 md:py-24 -mx-0">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${HERO_BG})` }}
         />
-        <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
-          <div className="p-2 bg-surface rounded-full">
-            <Filter className="h-4 w-4 text-primary" />
+        <div className="absolute inset-0 bg-brandNavy/45" />
+        <div className="relative z-10 w-full max-w-3xl mx-auto">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl px-6 py-8 md:px-10 md:py-10 border border-white/50">
+            <h1 className="text-3xl md:text-4xl font-bold text-brandNavy text-center leading-tight">
+              Find homes for rent in <span className="text-brandTeal">Kenya</span>
+            </h1>
+            <p className="mt-4 text-center text-textSecondary text-sm md:text-base leading-relaxed max-w-xl mx-auto">
+              Discover apartments, houses, and studios in Nairobi and beyond. Your next long-term rental is a
+              few clicks away
+              {isAuthenticated ? `, ${user?.fullName.split(' ')[0]}` : ''}.
+            </p>
+            <Link
+              to="/search"
+              className="mt-6 relative flex items-center rounded-full border border-border bg-white shadow-md hover:shadow-lg transition-shadow group"
+            >
+              <Search className="absolute left-4 h-5 w-5 text-textSecondary group-hover:text-brandTeal pointer-events-none" />
+              <span className="block w-full py-3.5 pl-12 pr-14 text-textSecondary text-sm md:text-base">
+                Search by location, price, or property type…
+              </span>
+              <span className="absolute right-2 p-2 rounded-full bg-surface group-hover:bg-brandTeal/10">
+                <Filter className="h-4 w-4 text-brandTeal" />
+              </span>
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Category Chips */}
-      <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-        {CATEGORIES.map(category => (
-          <button 
-            key={category}
-            onClick={() => setActiveCategory(category)}
-            className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-              activeCategory === category 
-                ? 'bg-primary text-white shadow-md transform scale-105' 
-                : 'bg-surface text-textSecondary hover:bg-gray-200'
-            }`}
+      <div className="max-w-3xl mx-auto px-4 md:px-6 pt-10">
+        <div className="flex justify-center">
+          <Link
+            to="/search"
+            className="inline-flex items-center justify-center rounded-full bg-brandNavy text-white text-sm font-semibold px-8 py-2.5 hover:bg-black transition-colors"
           >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {/* Featured / Premium */}
-      {featured.length > 0 && (
-        <div>
-          <div className="flex justify-between items-end mb-4">
-            <h3 className="text-xl font-bold">Premium Picks</h3>
-          </div>
-          <div className="flex overflow-x-auto hide-scrollbar gap-6 pb-4 -mx-4 px-4 md:mx-0 md:px-0">
-            {featured.map((house: any) => (
-              <Link to={`/house/${house._id}`} key={house._id} className="min-w-[280px] md:min-w-[320px] card-container p-0 overflow-hidden group cursor-pointer block">
-                <div className="relative h-48 overflow-hidden bg-gray-200">
-                  <img 
-                    src={house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} 
-                    alt={house.title} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                  <div className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary transition-colors" onClick={(e) => e.preventDefault()}>
-                    <Heart className="h-5 w-5" />
-                  </div>
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-warning text-xs font-bold rounded shadow-sm text-black flex items-center gap-1">
-                    ⭐ Premium
-                  </div>
-                </div>
-                <div className="p-4 bg-white">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-lg line-clamp-1">{house.title}</h4>
-                  </div>
-                  <div className="flex items-center text-textSecondary text-sm mb-3">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    <span className="truncate">{house.location.area}, {house.location.city}</span>
-                  </div>
-                  <p className="text-primary font-bold text-lg">KES {house.pricing.pricePerMonth.toLocaleString()} <span className="text-sm text-textSecondary font-normal">/mo</span></p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recommended / Recent */}
-      <div>
-        <div className="flex justify-between items-end mb-4">
-          <h3 className="text-xl font-bold">Recommended for you</h3>
-          <Link to="/search" className="text-primary text-sm font-semibold cursor-pointer hover:underline">See All</Link>
+            View all
+          </Link>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1,2,3,4].map(n => (
-              <div key={n} className="animate-pulse card-container bg-surface h-72"></div>
-            ))}
+        <section className="mt-14">
+          <h2 className="text-2xl md:text-3xl font-bold text-brandNavy text-center">
+            Explore properties in Nairobi
+          </h2>
+          <div className="mx-auto mt-3 h-1 w-16 bg-brandNavy rounded-full" />
+
+          <div className="mt-8 border-b border-border">
+            <div className="flex justify-center gap-8 md:gap-12">
+              {(
+                [
+                  { id: 'all' as const, label: 'All properties' },
+                  { id: 'rent' as const, label: 'For rent' },
+                  { id: 'sale' as const, label: 'Featured' },
+                ] as const
+              ).map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setListingTab(id)}
+                  className={`pb-3 text-sm font-semibold uppercase tracking-wide border-b-2 transition-colors ${
+                    listingTab === id
+                      ? 'text-brandTeal border-brandTeal'
+                      : 'text-textSecondary border-transparent hover:text-brandNavy'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recent.map((house: any) => (
-              <Link to={`/house/${house._id}`} key={house._id} className="card-container p-0 overflow-hidden group cursor-pointer block">
-                <div className="relative h-48 overflow-hidden bg-gray-200">
-                  <img 
-                    src={house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} 
-                    alt={house.title} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+
+          <div className="mt-10 space-y-8 pb-4">
+            {loading ? (
+              <>
+                {[1, 2, 3].map((n) => (
+                  <div
+                    key={n}
+                    className="animate-pulse rounded-xl bg-surface h-80 max-w-3xl mx-auto border border-border"
                   />
-                  <div className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary transition-colors" onClick={(e) => e.preventDefault()}>
-                    <Heart className="h-5 w-5" />
-                  </div>
-                  {house.isPremium && (
-                    <div className="absolute top-3 left-3 px-2 py-1 bg-warning text-xs font-bold rounded shadow-sm text-black flex items-center gap-1">
-                      ⭐ Premium
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 bg-white">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-lg line-clamp-1">{house.title}</h4>
-                  </div>
-                  <div className="flex items-center text-textSecondary text-sm mb-3">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    <span className="truncate">{house.location.area}, {house.location.city}</span>
-                  </div>
-                  <p className="text-primary font-bold text-lg">KES {house.pricing.pricePerMonth.toLocaleString()} <span className="text-sm text-textSecondary font-normal">/mo</span></p>
-                </div>
-              </Link>
-            ))}
-            {recent.length === 0 && (
-              <div className="col-span-full py-10 text-center text-textSecondary">
-                No properties found for {activeCategory}.
-              </div>
+                ))}
+              </>
+            ) : filteredListings.length === 0 ? (
+              <p className="text-center text-textSecondary py-12">No listings match this filter yet.</p>
+            ) : (
+              filteredListings.map((house) => (
+                <PropertyListingCard
+                  key={house._id}
+                  house={house}
+                  badge={badgeForHouse(house, listingTab)}
+                />
+              ))
             )}
           </div>
-        )}
+        </section>
+
+        <section className="mt-16 pt-4">
+          <h2 className="text-2xl font-bold text-brandNavy text-center">Ads</h2>
+          <div className="mx-auto mt-3 h-1 w-12 bg-brandNavy rounded-full" />
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
+            {adImages.map((src, i) => (
+              <div
+                key={src}
+                className={`relative rounded-xl overflow-hidden shadow-md aspect-[4/3] group cursor-pointer border border-border/80 ${
+                  adSlide !== i ? 'sm:opacity-90' : ''
+                }`}
+                onClick={() => setAdSlide(i)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setAdSlide(i);
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <img src={src} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-brandNavy shadow">
+                  <Search className="h-3.5 w-3.5" />
+                  {120 + i * 35}
+                </span>
+                {i === 1 && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="btn-teal text-sm shadow-lg">View property</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-center gap-2 mt-4">
+            {adImages.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setAdSlide(i)}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  adSlide === i ? 'bg-brandNavy' : 'bg-border ring-1 ring-brandNavy/20'
+                }`}
+                aria-label={`Ad slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-20 pb-4">
+          <div className="flex justify-center mb-10">
+            <Link
+              to="/search"
+              className="rounded-full bg-brandNavy text-white text-sm font-semibold px-10 py-2.5 hover:bg-black transition-colors"
+            >
+              More ads
+            </Link>
+          </div>
+          <h2 className="text-3xl font-bold text-brandNavy text-center">Features</h2>
+          <div className="mx-auto mt-3 h-1 w-14 bg-brandNavy rounded-full" />
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-12 max-w-4xl mx-auto">
+            {FEATURES.map(({ icon: Icon, title, text }) => (
+              <div key={title} className="text-center sm:text-left">
+                <div className="inline-flex p-3 rounded-full bg-brandNavy/5 text-brandNavy mb-4">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h3 className="font-bold text-lg text-brandNavy">{title}</h3>
+                <p className="mt-2 text-sm text-textSecondary leading-relaxed">{text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-20 mb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-brandNavy text-center">Our partners</h2>
+          <div className="mx-auto mt-3 h-1 w-16 bg-brandNavy rounded-full" />
+          <div className="mt-10 flex flex-wrap justify-center gap-10 md:gap-16 items-center opacity-90">
+            <div className="h-16 px-8 rounded-lg border-2 border-emerald-600/40 bg-emerald-50 flex items-center justify-center text-emerald-800 font-bold text-sm tracking-wide">
+              Partner Realty
+            </div>
+            <div className="h-16 px-8 rounded-lg border-2 border-blue-600/40 bg-blue-50 flex items-center justify-center text-blue-900 font-bold text-sm tracking-wide">
+              Metro Homes
+            </div>
+          </div>
+        </section>
       </div>
+
+      <SiteFooter />
     </div>
   );
 };
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Morning';
-  if (hour < 18) return 'Afternoon';
-  return 'Evening';
-}
 
 export default Home;

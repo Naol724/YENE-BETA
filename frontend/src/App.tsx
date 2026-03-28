@@ -20,10 +20,10 @@ import ResetPassword from './pages/ResetPassword';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col pt-16 bg-background text-textPrimary">
+      <div className="min-h-screen flex flex-col pt-14 pb-20 md:pt-[100px] md:pb-0 bg-background text-textPrimary">
         <Navbar />
 
-        <main className="flex-1 overflow-auto md:pt-16 pb-16 md:pb-0">
+        <main className="flex-1 overflow-auto">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
