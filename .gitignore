@@ -1,26 +1,15 @@
-# Dependencies
 node_modules/
-
-# Environment variables — never push these
 .env
-*.env.local
-*.env.*.local
-
-# Build outputs
 dist/
 build/
-
-# Logs
-*.log
-npm-debug.log*
-
-# OS files
 .DS_Store
-Thumbs.db
-
-# Editor
+*.log
 .vscode/
 .idea/
-
-# Uploads
-uploads/
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+brain/
+tmp/
