@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import type { RootState } from '../store';
 import { Search, MapPin, Bell, Filter, Heart } from 'lucide-react';
 import api from '../utils/api';
@@ -8,8 +9,9 @@ const CATEGORIES = ['All', 'Apartment', 'House', 'Condo', 'Studio'];
 
 const Home: React.FC = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
-  const [, setFeatured] = useState<any[]>([]);
+  const [featured, setFeatured] = useState<any[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,10 @@ const Home: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="relative group cursor-pointer shadow-sm active:scale-95 transition-transform duration-200">
+      <div 
+        onClick={() => navigate('/search')}
+        className="relative group cursor-pointer shadow-sm active:scale-95 transition-transform duration-200"
+      >
         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400 group-hover:text-primary transition-colors" />
         </div>
@@ -89,11 +94,49 @@ const Home: React.FC = () => {
         ))}
       </div>
 
+      {/* Featured / Premium */}
+      {featured.length > 0 && (
+        <div>
+          <div className="flex justify-between items-end mb-4">
+            <h3 className="text-xl font-bold">Premium Picks</h3>
+          </div>
+          <div className="flex overflow-x-auto hide-scrollbar gap-6 pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+            {featured.map((house: any) => (
+              <Link to={`/house/${house._id}`} key={house._id} className="min-w-[280px] md:min-w-[320px] card-container p-0 overflow-hidden group cursor-pointer block">
+                <div className="relative h-48 overflow-hidden bg-gray-200">
+                  <img 
+                    src={house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} 
+                    alt={house.title} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                  />
+                  <div className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary transition-colors" onClick={(e) => e.preventDefault()}>
+                    <Heart className="h-5 w-5" />
+                  </div>
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-warning text-xs font-bold rounded shadow-sm text-black flex items-center gap-1">
+                    ⭐ Premium
+                  </div>
+                </div>
+                <div className="p-4 bg-white">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="font-semibold text-lg line-clamp-1">{house.title}</h4>
+                  </div>
+                  <div className="flex items-center text-textSecondary text-sm mb-3">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    <span className="truncate">{house.location.area}, {house.location.city}</span>
+                  </div>
+                  <p className="text-primary font-bold text-lg">KES {house.pricing.pricePerMonth.toLocaleString()} <span className="text-sm text-textSecondary font-normal">/mo</span></p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recommended / Recent */}
       <div>
         <div className="flex justify-between items-end mb-4">
           <h3 className="text-xl font-bold">Recommended for you</h3>
-          <span className="text-primary text-sm font-semibold cursor-pointer">See All</span>
+          <Link to="/search" className="text-primary text-sm font-semibold cursor-pointer hover:underline">See All</Link>
         </div>
 
         {loading ? (
@@ -105,14 +148,14 @@ const Home: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {recent.map((house: any) => (
-              <div key={house._id} className="card-container p-0 overflow-hidden group cursor-pointer">
+              <Link to={`/house/${house._id}`} key={house._id} className="card-container p-0 overflow-hidden group cursor-pointer block">
                 <div className="relative h-48 overflow-hidden bg-gray-200">
                   <img 
                     src={house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} 
                     alt={house.title} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                   />
-                  <div className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary transition-colors">
+                  <div className="absolute top-3 right-3 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary transition-colors" onClick={(e) => e.preventDefault()}>
                     <Heart className="h-5 w-5" />
                   </div>
                   {house.isPremium && (
@@ -131,7 +174,7 @@ const Home: React.FC = () => {
                   </div>
                   <p className="text-primary font-bold text-lg">KES {house.pricing.pricePerMonth.toLocaleString()} <span className="text-sm text-textSecondary font-normal">/mo</span></p>
                 </div>
-              </div>
+              </Link>
             ))}
             {recent.length === 0 && (
               <div className="col-span-full py-10 text-center text-textSecondary">

@@ -1,66 +1,66 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
+import api from '../utils/api';
 import { login, normalizeApiUser } from '../store/authSlice';
 import type { User } from '../store/authSlice';
-import api from '../utils/api';
 import { Eye, EyeOff, Home, Loader2 } from 'lucide-react';
 
-function redirectAfterAuth(
-  user: User,
-  navigate: ReturnType<typeof useNavigate>,
-  fromPath?: string
-) {
-  if (fromPath) {
-    navigate(fromPath, { replace: true });
-    return;
-  }
-  if (user.role === 'OWNER') navigate('/owner');
-  else navigate('/');
-}
-
-const Login: React.FC = () => {
-  const dispatch = useDispatch();
+const ResetPassword: React.FC = () => {
+  const { resettoken } = useParams<{ resettoken: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const fromPath = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
+  const dispatch = useDispatch();
 
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (password !== confirm) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    if (!resettoken) {
+      setError('Invalid reset link');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { data } = await api.post<{
         success: boolean;
-        token: string;
-        user: User;
+        token?: string;
+        user?: User;
         message?: string;
-      }>('/auth/login', { email: email.trim(), password });
+      }>(`/auth/reset-password/${resettoken}`, { password });
 
       if (!data.success || !data.token || !data.user) {
-        setError(data.message ?? 'Could not sign in');
+        setError(data.message ?? 'Reset failed');
         return;
       }
 
       const user = normalizeApiUser(data.user as Parameters<typeof normalizeApiUser>[0]);
       dispatch(login({ user, token: data.token }));
-      redirectAfterAuth(user, navigate, fromPath);
-    } catch (err: unknown) {
+      if (user.role === 'OWNER') navigate('/owner', { replace: true });
+      else navigate('/', { replace: true });
+    } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
         const d = err.response.data as { message?: string };
-        if (d.message) {
-          setError(String(d.message));
-          return;
-        }
+        if (d.message) setError(String(d.message));
+        else setError('Invalid or expired link.');
+      } else {
+        setError('Something went wrong. Try again.');
       }
-      setError('Something went wrong. Try again.');
     } finally {
       setSubmitting(false);
     }
@@ -77,48 +77,31 @@ const Login: React.FC = () => {
       </Link>
 
       <div className="w-full max-w-md card-container p-6 md:p-8 shadow-md">
-        <h1 className="text-2xl font-bold text-textPrimary mb-1">Welcome back</h1>
-        <p className="text-textSecondary text-sm mb-6">Sign in to continue</p>
-
-        {error && (
-          <div
-            className="mb-4 rounded-lg bg-red-50 border border-error/30 text-error text-sm px-4 py-3"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        <h1 className="text-2xl font-bold text-textPrimary mb-1">Set new password</h1>
+        <p className="text-textSecondary text-sm mb-6">Choose a new password for your account.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div
+              className="rounded-lg bg-red-50 border border-error/30 text-error text-sm px-4 py-3"
+              role="alert"
+            >
+              {error}
+            </div>
+          )}
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Email
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Password
+            <label htmlFor="reset-password" className="block text-sm font-medium text-textPrimary mb-1.5">
+              New password
             </label>
             <div className="relative">
               <input
-                id="login-password"
+                id="reset-password"
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field pr-11"
-                placeholder="••••••••"
                 minLength={8}
               />
               <button
@@ -131,29 +114,46 @@ const Login: React.FC = () => {
               </button>
             </div>
           </div>
-
-          <div className="text-right">
-            <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-              Forgot password?
-            </Link>
+          <div>
+            <label htmlFor="reset-confirm" className="block text-sm font-medium text-textPrimary mb-1.5">
+              Confirm password
+            </label>
+            <div className="relative">
+              <input
+                id="reset-confirm"
+                type={showConfirm ? 'text' : 'password'}
+                autoComplete="new-password"
+                required
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="input-field pr-11"
+                minLength={8}
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-textSecondary hover:text-textPrimary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                onClick={() => setShowConfirm((v) => !v)}
+                aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+              >
+                {showConfirm ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+              </button>
+            </div>
           </div>
-
           <button type="submit" disabled={submitting} className="btn-primary w-full gap-2">
             {submitting ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Signing in…
+                Updating…
               </>
             ) : (
-              'Sign in'
+              'Update password'
             )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-textSecondary">
-          No account yet?{' '}
-          <Link to="/register" className="font-semibold text-primary hover:underline">
-            Create one
+          <Link to="/login" className="font-semibold text-primary hover:underline">
+            Back to sign in
           </Link>
         </p>
       </div>
@@ -161,4 +161,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default ResetPassword;

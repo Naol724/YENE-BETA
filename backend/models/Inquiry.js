@@ -27,12 +27,23 @@ const inquirySchema = new mongoose.Schema({
     enum: ['Pending', 'Read', 'Responded'],
     default: 'Pending'
   },
+  renterLastReadAt: {
+    type: Date
+  },
+  ownerLastReadAt: {
+    type: Date
+  },
   replies: [{
     sender: {
       type: mongoose.Schema.ObjectId,
       ref: 'User'
     },
-    message: String,
+    message: {
+      type: String,
+      required: true,
+      minlength: 1,
+      maxlength: 500
+    },
     createdAt: {
       type: Date,
       default: Date.now

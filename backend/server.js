@@ -5,7 +5,16 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+const { validateEnv } = require('./config/validateEnv');
+validateEnv();
+
+const { authLimiter, apiLimiter } = require('./middleware/rateLimiters');
+
 const app = express();
+
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 // Middleware
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
@@ -21,7 +30,8 @@ const users = require('./routes/userRoutes');
 const favorites = require('./routes/favoriteRoutes');
 const premium = require('./routes/premiumRoutes');
 
-app.use('/api/auth', auth);
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter, auth);
 app.use('/api/houses', houses);
 app.use('/api/inquiries', inquiries);
 app.use('/api/users', users);

@@ -1,10 +1,11 @@
 const express = require('express');
-const { 
-  createInquiry, 
-  getMyInquiries, 
-  getReceivedInquiries, 
-  updateInquiryStatus, 
-  replyToInquiry 
+const {
+  createInquiry,
+  getMyInquiries,
+  getReceivedInquiries,
+  getInquiryById,
+  updateInquiryStatus,
+  replyToInquiry
 } = require('../controllers/inquiryController');
 
 const { protect, authorize } = require('../middleware/auth');
@@ -18,6 +19,7 @@ router.post('/', authorize('RENTER'), createInquiry);
 router.get('/my-inquiries', authorize('RENTER'), getMyInquiries);
 router.get('/received', authorize('OWNER'), getReceivedInquiries);
 
+router.get('/:id', getInquiryById);
 router.patch('/:id', authorize('OWNER'), updateInquiryStatus);
 router.post('/:id/reply', replyToInquiry);
 

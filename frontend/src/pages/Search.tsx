@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, SlidersHorizontal, Map, Grid, Heart } from 'lucide-react';
 import api from '../utils/api';
 
 const Search: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [houses, setHouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter State
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('city') || '');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 200000 });
   const [beds, setBeds] = useState(0);
 
@@ -37,6 +39,11 @@ const Search: React.FC = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (searchTerm) {
+      setSearchParams({ city: searchTerm });
+    } else {
+      setSearchParams({});
+    }
     fetchProperties();
   };
 
@@ -134,10 +141,10 @@ const Search: React.FC = () => {
             ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {houses.map(house => (
-                  <div key={house._id} className="bg-white rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all flex flex-col sm:flex-row group">
+                  <Link to={`/house/${house._id}`} key={house._id} className="bg-white rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all flex flex-col sm:flex-row group block">
                     <div className="relative w-full sm:w-2/5 h-48 sm:h-auto overflow-hidden">
                       <img src={house.images[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={house.title} />
-                      <div className="absolute top-2 right-2 p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary">
+                      <div className="absolute top-2 right-2 p-1.5 bg-white/20 backdrop-blur-md rounded-full text-white hover:text-secondary" onClick={(e) => e.preventDefault()}>
                         <Heart className="h-5 w-5" />
                       </div>
                     </div>
@@ -154,7 +161,7 @@ const Search: React.FC = () => {
                         <p className="text-primary font-bold text-lg">KES {house.pricing.pricePerMonth.toLocaleString()}</p>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
