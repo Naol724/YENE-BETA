@@ -5,6 +5,11 @@ import { store } from './store';
 import App from './App';
 import './index.css';
 
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  (window as Window & { deferredInstallPrompt?: typeof e }).deferredInstallPrompt = e;
+});
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <Provider store={store}>

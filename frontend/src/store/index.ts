@@ -1,5 +1,5 @@
 import { configureStore, type Middleware } from '@reduxjs/toolkit';
-import authReducer, { login, logout, normalizeApiUser, type AuthState } from './authSlice';
+import authReducer, { login, logout, updateUser, normalizeApiUser, type AuthState } from './authSlice';
 import { AUTH_STORAGE_KEY } from '../utils/api';
 
 function loadPersistedAuth(): AuthState | undefined {
@@ -19,21 +19,30 @@ function loadPersistedAuth(): AuthState | undefined {
   return undefined;
 }
 
-const authPersistenceMiddleware: Middleware = () => (next) => (action) => {
-  const result = next(action);
-  if (login.match(action)) {
-    localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        token: action.payload.token,
-        user: action.payload.user,
-      })
-    );
-  } else if (logout.match(action)) {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-  }
-  return result;
-};
+const authPersistenceMiddleware: Middleware<object, { auth: AuthState }> =
+  (store) => (next) => (action) => {
+    const result = next(action);
+    if (login.match(action)) {
+      localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({
+          token: action.payload.token,
+          user: action.payload.user,
+        })
+      );
+    } else if (logout.match(action)) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } else if (updateUser.match(action)) {
+      const { auth } = store.getState();
+      if (auth.token && auth.user) {
+        localStorage.setItem(
+          AUTH_STORAGE_KEY,
+          JSON.stringify({ token: auth.token, user: auth.user })
+        );
+      }
+    }
+    return result;
+  };
 
 const persistedAuth = loadPersistedAuth();
 

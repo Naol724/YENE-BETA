@@ -1,35 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import axios from 'axios';
 import type { RootState } from '../store';
 import { Search, MapPin, Bell, Filter, Heart } from 'lucide-react';
 import api from '../utils/api';
 
 const CATEGORIES = ['All', 'Apartment', 'House', 'Condo', 'Studio'];
 
+interface HouseCard {
+  _id: string;
+  title: string;
+  isPremium?: boolean;
+  images?: { url?: string }[];
+  location: { area: string; city: string };
+  pricing: { pricePerMonth: number };
+}
+
 const Home: React.FC = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [, setFeatured] = useState<any[]>([]);
-  const [recent, setRecent] = useState<any[]>([]);
+  const [, setFeatured] = useState<HouseCard[]>([]);
+  const [recent, setRecent] = useState<HouseCard[]>([]);
   const [loading, setLoading] = useState(true);
+  /** null = ok; offline = no response (API down/wrong URL); server = API responded with error */
+  const [listingsError, setListingsError] = useState<'offline' | 'server' | null>(null);
 
   useEffect(() => {
     const fetchHouses = async () => {
       try {
         setLoading(true);
-        // Fetch Premium properties for Featured
+        setListingsError(null);
         const featuredRes = await api.get('/houses?isPremium=true&limit=5');
-        setFeatured(featuredRes.data.data);
-        
-        // Fetch Recent properties based on category
+        setFeatured(featuredRes.data.data ?? []);
+
         let recentUrl = '/houses?limit=8';
         if (activeCategory !== 'All') {
           recentUrl += `&propertyType=${activeCategory}`;
         }
         const recentRes = await api.get(recentUrl);
-        setRecent(recentRes.data.data);
+        setRecent(recentRes.data.data ?? []);
       } catch (error) {
-        console.error('Failed to fetch properties', error);
+        setFeatured([]);
+        setRecent([]);
+        const isServerResponse =
+          axios.isAxiosError(error) && error.response != null;
+        setListingsError(isServerResponse ? 'server' : 'offline');
+        if (import.meta.env.DEV) {
+          console.warn(
+            isServerResponse
+              ? '[Home] Listings request failed (server error):'
+              : '[Home] API unreachable (start backend or set VITE_API_URL):',
+            error
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -91,6 +114,29 @@ const Home: React.FC = () => {
 
       {/* Recommended / Recent */}
       <div>
+        {listingsError === 'offline' && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-warning/50 bg-warning/10 px-4 py-3 text-sm text-textPrimary"
+          >
+            <strong className="font-semibold">Can’t reach the API.</strong> From the project root run{' '}
+            <code className="text-xs bg-white/80 px-1 rounded">npm run api</code> (backend on port 5000).
+            If the API uses another host/port, set{' '}
+            <code className="text-xs bg-white/80 px-1 rounded">VITE_API_URL</code> in{' '}
+            <code className="text-xs bg-white/80 px-1 rounded">frontend/.env</code> (e.g.{' '}
+            <code className="text-xs bg-white/80 px-1 rounded">http://localhost:5000/api</code>) and restart Vite.
+          </div>
+        )}
+        {listingsError === 'server' && (
+          <div
+            role="status"
+            className="mb-6 rounded-xl border border-warning/50 bg-warning/10 px-4 py-3 text-sm text-textPrimary"
+          >
+            <strong className="font-semibold">Can’t load listings.</strong> The API responded with an error—often a
+            database issue. Check the backend terminal, confirm <code className="text-xs bg-white/80 px-1 rounded">MONGODB_URI</code> in{' '}
+            <code className="text-xs bg-white/80 px-1 rounded">backend/.env</code>, and in MongoDB Atlas add your IP under Network Access, then restart the API.
+          </div>
+        )}
         <div className="flex justify-between items-end mb-4">
           <h3 className="text-xl font-bold">Recommended for you</h3>
           <span className="text-primary text-sm font-semibold cursor-pointer">See All</span>
@@ -104,7 +150,7 @@ const Home: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recent.map((house: any) => (
+            {recent.map((house) => (
               <div key={house._id} className="card-container p-0 overflow-hidden group cursor-pointer">
                 <div className="relative h-48 overflow-hidden bg-gray-200">
                   <img 
@@ -135,7 +181,7 @@ const Home: React.FC = () => {
             ))}
             {recent.length === 0 && (
               <div className="col-span-full py-10 text-center text-textSecondary">
-                No properties found for {activeCategory}.
+                {listingsError ? 'No listings loaded.' : `No properties found for ${activeCategory}.`}
               </div>
             )}
           </div>

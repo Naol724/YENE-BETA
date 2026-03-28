@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { dbErrorMessage } = require('../utils/dbErrorMessage');
 
 // Generate Token
 const generateToken = (id) => {
@@ -55,7 +56,20 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    if (error.name === 'ValidationError') {
+      const first = Object.values(error.errors || {})[0];
+      const msg =
+        first && first.message ? first.message : error.message;
+      return res.status(400).json({ success: false, message: msg });
+    }
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists',
+      });
+    }
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 
@@ -95,7 +109,8 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 
@@ -110,7 +125,8 @@ exports.getMe = async (req, res) => {
       data: user
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 
@@ -140,7 +156,8 @@ exports.verifyEmail = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'Email verified successfully' });
   } catch(error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 
@@ -159,7 +176,8 @@ exports.forgotPassword = async (req, res) => {
     console.log('Reset Token: ', resetToken);
     res.status(200).json({ success: true, message: 'Email sent' });
   } catch(error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 
@@ -188,7 +206,8 @@ exports.resetPassword = async (req, res) => {
       message: 'Password reset successful'
     });
   } catch(error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
 };
 

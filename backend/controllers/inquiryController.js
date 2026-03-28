@@ -44,12 +44,48 @@ exports.getMyInquiries = async (req, res) => {
   }
 };
 
+// @desc    Get single inquiry (owner, renter, or admin)
+// @route   GET /api/inquiries/:id
+// @access  Private
+exports.getInquiryById = async (req, res) => {
+  try {
+    const inquiry = await Inquiry.findById(req.params.id)
+      .populate('property', 'title images pricing location status')
+      .populate('renter', 'fullName phone email')
+      .populate('owner', 'fullName phone email')
+      .populate({
+        path: 'replies.sender',
+        select: 'fullName email role',
+      });
+
+    if (!inquiry) {
+      return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    }
+
+    const uid = req.user.id.toString();
+    const ownerId = inquiry.owner?._id ? inquiry.owner._id.toString() : inquiry.owner.toString();
+    const renterId = inquiry.renter?._id ? inquiry.renter._id.toString() : inquiry.renter.toString();
+    const isOwner = ownerId === uid;
+    const isRenter = renterId === uid;
+    if (!isOwner && !isRenter && req.user.role !== 'ADMIN') {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    res.status(200).json({ success: true, data: inquiry });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Owner's received inquiries
 // @route   GET /api/inquiries/received
 // @access  Private (Owner)
 exports.getReceivedInquiries = async (req, res) => {
   try {
-    const query = { owner: req.user.id };
+    let query = { owner: req.user.id };
+    if (req.user.role === 'ADMIN') {
+      query = {};
+    }
 
     const inquiries = await Inquiry.find(query)
       .populate('property', 'title images pricing status')

@@ -5,6 +5,7 @@ export interface User {
   id: string;
   fullName: string;
   email: string;
+  phone?: string;
   role: 'RENTER' | 'OWNER';
   isApproved?: boolean;
 }
@@ -16,11 +17,13 @@ export function normalizeApiUser(u: {
   email: string;
   role: string;
   isApproved?: boolean;
+  phone?: string;
 }): User {
   return {
     id: String(u.id),
     fullName: u.fullName,
     email: u.email,
+    phone: u.phone,
     role: u.role === 'OWNER' ? 'OWNER' : 'RENTER',
     isApproved: u.isApproved,
   };
@@ -52,8 +55,13 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
     },
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
   },
 });
 
-export const { login, logout } = authSlice.actions;
+export const { login, logout, updateUser } = authSlice.actions;
 export default authSlice.reducer;

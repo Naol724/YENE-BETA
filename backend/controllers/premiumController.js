@@ -52,6 +52,7 @@ exports.checkLimit = async (req, res) => {
     // Premium user = unlimited. Free user = 1
     const isPremium = user.isPremium && user.premiumExpiresAt > Date.now();
     const canAddListing = isPremium || houseCount < 1;
+    const freeListingsRemaining = isPremium ? null : Math.max(0, 1 - houseCount);
 
     res.status(200).json({
       success: true,
@@ -59,7 +60,9 @@ exports.checkLimit = async (req, res) => {
         isPremium,
         houseCount,
         limit: isPremium ? 'unlimited' : 1,
-        canAddListing
+        canAddListing,
+        premiumExpiresAt: user.premiumExpiresAt || null,
+        freeListingsRemaining,
       }
     });
   } catch (error) {

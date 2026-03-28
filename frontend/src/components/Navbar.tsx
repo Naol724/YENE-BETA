@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../store';
 import { logout } from '../store/authSlice';
@@ -8,7 +8,13 @@ import { Home, Search, Heart, MessageSquare, User as UserIcon, LogOut } from 'lu
 const Navbar: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const messagesPath = user?.role === 'OWNER' ? '/owner/inquiries' : '/inquiries';
+  const messagesActive =
+    user?.role === 'OWNER'
+      ? location.pathname.startsWith('/owner/inquiries')
+      : location.pathname === '/inquiries';
 
   const handleLogout = () => {
     dispatch(logout());
@@ -27,7 +33,7 @@ const Navbar: React.FC = () => {
           <Link to="/search" className="text-textSecondary hover:text-primary transition font-medium">Search</Link>
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
-              <span className="font-semibold text-textPrimary">Hi, {user?.fullName.split(' ')[0]}</span>
+              <span className="font-semibold text-textPrimary">Hi, {user?.fullName?.split(' ')[0]}</span>
               {user?.role === 'OWNER' && (
                 <Link to="/owner" className="btn-primary h-10 px-4">Dashboard</Link>
               )}
@@ -60,11 +66,16 @@ const Navbar: React.FC = () => {
             <span className="text-[10px] font-medium">Saved</span>
           </Link>
         )}
-        <Link to="/inquiries" className="flex flex-col items-center p-2 text-textSecondary hover:text-primary active:scale-95 transition-transform">
+        <Link
+          to={messagesPath}
+          className={`flex flex-col items-center p-2 hover:text-primary active:scale-95 transition-transform ${
+            messagesActive ? 'text-primary' : 'text-textSecondary'
+          }`}
+        >
           <MessageSquare className="h-6 w-6 mb-1" />
           <span className="text-[10px] font-medium">Messages</span>
         </Link>
-        <Link to={isAuthenticated ? (user?.role === 'OWNER' ? '/owner' : '/profile') : '/login'} className="flex flex-col items-center p-2 text-textSecondary hover:text-primary active:scale-95 transition-transform">
+        <Link to={isAuthenticated ? (user?.role === 'OWNER' ? '/owner/profile' : '/profile') : '/login'} className="flex flex-col items-center p-2 text-textSecondary hover:text-primary active:scale-95 transition-transform">
           <UserIcon className="h-6 w-6 mb-1" />
           <span className="text-[10px] font-medium">Profile</span>
         </Link>

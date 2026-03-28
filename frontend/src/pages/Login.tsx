@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import axios from 'axios';
 import { login, normalizeApiUser } from '../store/authSlice';
 import type { User } from '../store/authSlice';
 import api from '../utils/api';
+import { friendlyAuthError } from '../utils/friendlyAuthError';
+import { networkErrorHint, parseApiErrorMessage } from '../utils/parseApiError';
 import { Home, Loader2 } from 'lucide-react';
 
 function redirectAfterAuth(
@@ -44,7 +45,7 @@ const Login: React.FC = () => {
       }>('/auth/login', { email: email.trim(), password });
 
       if (!data.success || !data.token || !data.user) {
-        setError(data.message ?? 'Could not sign in');
+        setError(friendlyAuthError(data.message ?? 'Could not sign in'));
         return;
       }
 
@@ -52,12 +53,15 @@ const Login: React.FC = () => {
       dispatch(login({ user, token: data.token }));
       redirectAfterAuth(user, navigate, fromPath);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
-        const d = err.response.data as { message?: string };
-        if (d.message) {
-          setError(String(d.message));
-          return;
-        }
+      const fromBody = parseApiErrorMessage(err);
+      if (fromBody) {
+        setError(friendlyAuthError(fromBody));
+        return;
+      }
+      const net = networkErrorHint(err);
+      if (net) {
+        setError(net);
+        return;
       }
       setError('Something went wrong. Try again.');
     } finally {

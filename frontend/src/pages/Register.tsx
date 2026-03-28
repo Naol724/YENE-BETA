@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import axios from 'axios';
 import { login, normalizeApiUser } from '../store/authSlice';
 import type { User } from '../store/authSlice';
 import api from '../utils/api';
+import { friendlyAuthError } from '../utils/friendlyAuthError';
+import { networkErrorHint, parseApiErrorMessage } from '../utils/parseApiError';
 import { Home, Loader2 } from 'lucide-react';
 
 function redirectAfterAuth(user: User, navigate: ReturnType<typeof useNavigate>) {
@@ -54,7 +55,7 @@ const Register: React.FC = () => {
       });
 
       if (!data.success || !data.token || !data.user) {
-        setError(data.message ?? 'Could not create account');
+        setError(friendlyAuthError(data.message ?? 'Could not create account'));
         return;
       }
 
@@ -62,12 +63,15 @@ const Register: React.FC = () => {
       dispatch(login({ user, token: data.token }));
       redirectAfterAuth(user, navigate);
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
-        const d = err.response.data as { message?: string };
-        if (d.message) {
-          setError(String(d.message));
-          return;
-        }
+      const fromBody = parseApiErrorMessage(err);
+      if (fromBody) {
+        setError(friendlyAuthError(fromBody));
+        return;
+      }
+      const net = networkErrorHint(err);
+      if (net) {
+        setError(net);
+        return;
       }
       setError('Something went wrong. Try again.');
     } finally {
