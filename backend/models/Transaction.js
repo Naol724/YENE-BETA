@@ -27,7 +27,19 @@ const transactionSchema = new mongoose.Schema({
   paymentMethod: {
     type: String,
     default: 'M-Pesa'
-  }
+  },
+  merchantRequestId: {
+    type: String,
+    index: true,
+    sparse: true,
+  },
+  checkoutRequestId: {
+    type: String,
+    sparse: true,
+  },
+  mpesaResultDesc: {
+    type: String,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

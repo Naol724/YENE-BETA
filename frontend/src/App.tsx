@@ -19,6 +19,10 @@ import OwnerProfile from './pages/OwnerProfile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import Dashboard from './pages/Dashboard';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function AppRoutes() {
   const location = useLocation();
@@ -31,7 +35,7 @@ function AppRoutes() {
         className={
           ownerShell
             ? 'flex-1 overflow-auto'
-            : 'flex-1 overflow-auto md:pt-16 pb-16 md:pb-0 pt-0'
+            : 'flex-1 overflow-auto pt-14 md:pt-[100px]'
         }
       >
         <Routes>
@@ -39,7 +43,11 @@ function AppRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/signup" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:resettoken" element={<ResetPassword />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/listings" element={<Search />} />
           <Route path="/house/:id" element={<PropertyDetails />} />
 
           <Route
@@ -63,6 +71,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -94,7 +110,7 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-background text-textPrimary">
+      <div className="min-h-screen flex flex-col bg-background dark:bg-darkbg text-textPrimary dark:text-slate-100 transition-colors duration-200">
         <AppRoutes />
       </div>
     </Router>

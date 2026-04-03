@@ -187,7 +187,7 @@ const OwnerListings: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <div key={n} className="h-64 bg-surface rounded-xl animate-pulse border border-border" />
           ))}
@@ -197,14 +197,14 @@ const OwnerListings: React.FC = () => {
           <Home className="h-16 w-16 mx-auto text-textSecondary mb-4" aria-hidden />
           <h2 className="text-xl font-bold text-textPrimary mb-2">No listings yet</h2>
           <p className="text-textSecondary mb-6 max-w-md mx-auto">
-            Add your first property — it&apos;s free to list your first home and reach renters across Kenya.
+            Add your first property — it&apos;s free to list your first home and reach renters across Ethiopia.
           </p>
           <Link to="/owner/listings/new" className="btn-primary inline-flex">
             Add your first property
           </Link>
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {slice.map((house) => (
             <article
               key={house._id}

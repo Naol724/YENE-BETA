@@ -82,7 +82,7 @@ const defaultState = (): ListingFormState => ({
   bathrooms: 1,
   squareFootage: '',
   address: '',
-  city: 'Nairobi',
+  city: 'Addis Ababa',
   area: '',
   lat: -1.2921,
   lng: 36.8219,

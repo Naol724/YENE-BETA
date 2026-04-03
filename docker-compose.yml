@@ -1,0 +1,14 @@
+# Local MongoDB for development — no Atlas IP whitelist needed.
+# From this folder: npm run db:up
+# Then: npm run api   (and npm run dev for the frontend)
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - '27017:27017'
+    volumes:
+      - houserental_mongo_data:/data/db
+
+volumes:
+  houserental_mongo_data:

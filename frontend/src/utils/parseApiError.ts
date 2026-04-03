@@ -36,7 +36,7 @@ export function networkErrorHint(err: unknown): string | null {
   if (!axios.isAxiosError(err)) return null;
   if (err.response != null) return null;
   if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-    return 'Cannot reach the API. From the project root run npm run api, wait for “MongoDB connected”, then try again.';
+    return 'Cannot reach the API. From the project root run npm run api so the backend listens on port 5000, then try again.';
   }
   if (err.code === 'ECONNABORTED') {
     return 'Request timed out. Check your connection and that the API is running.';

@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Heart, MapPin, Trash2 } from 'lucide-react';
+import { removeFavorite as removeFavoriteApi } from '../services/favoriteService';
 import api from '../utils/api';
+import EmptyState from '../components/ui/EmptyState';
+import BackNavButton from '../components/BackNavButton';
+import PropertyCardSkeleton from '../components/PropertyCardSkeleton';
+
+type FavRow = {
+  _id: string;
+  house: {
+    _id: string;
+    title: string;
+    images?: { url?: string }[];
+    location?: { area?: string; city?: string };
+    pricing?: { pricePerMonth?: number };
+  };
+};
 
 const Favorites: React.FC = () => {
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<FavRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,10 +29,11 @@ const Favorites: React.FC = () => {
 
   const fetchFavorites = async () => {
     try {
-      const res = await api.get('/favorites');
-      setFavorites(res.data.data);
+      const res = await api.get<{ data: FavRow[] }>('/favorites');
+      setFavorites(res.data.data || []);
     } catch (err) {
       console.error(err);
+      toast.error('Could not load saved properties');
     } finally {
       setLoading(false);
     }
@@ -24,53 +41,85 @@ const Favorites: React.FC = () => {
 
   const removeFavorite = async (houseId: string) => {
     try {
-      await api.delete(`/favorites/${houseId}`);
-      setFavorites(favorites.filter(f => f.house._id !== houseId));
+      await removeFavoriteApi(houseId);
+      setFavorites((prev) => prev.filter((f) => f.house._id !== houseId));
+      toast.success('Removed from saved');
     } catch (err) {
       console.error(err);
+      toast.error('Could not remove');
     }
   };
 
   return (
     <div className="pb-24 pt-4 px-4 md:px-8 max-w-7xl mx-auto animate-fade-in">
-      <h2 className="text-2xl font-bold mb-6">Saved Properties</h2>
+      <div className="mb-4">
+        <BackNavButton fallbackTo="/" />
+      </div>
+      <h2 className="text-2xl font-bold mb-2 text-brandNavy dark:text-white">Saved properties</h2>
+      <p className="text-textSecondary dark:text-darkmuted text-sm mb-6">
+        Homes you saved with the heart icon (renter accounts).
+      </p>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1,2,3].map(n => <div key={n} className="h-64 bg-white rounded-xl animate-pulse"></div>)}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3].map((n) => (
+            <PropertyCardSkeleton key={n} />
+          ))}
         </div>
       ) : favorites.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-gray-300 rounded-xl bg-surface">
-          <Heart className="h-16 w-16 text-gray-300 mb-4" />
-          <h3 className="text-xl font-bold text-textPrimary mb-2">No saved properties yet</h3>
-          <p className="text-textSecondary mb-6">Start exploring to find your dream home</p>
-          <Link to="/search" className="btn-primary">Explore Houses</Link>
-        </div>
+        <EmptyState
+          icon={Heart}
+          title="No saved properties yet"
+          description="Browse listings and tap the heart to save homes you like."
+          action={
+            <Link to="/listings" className="btn-primary inline-block">
+              Browse listings
+            </Link>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {favorites.map((fav) => {
             const house = fav.house;
-            if(!house) return null;
+            if (!house) return null;
             return (
-              <div key={fav._id} className="card-container p-0 overflow-hidden border border-border group relative">
+              <div
+                key={fav._id}
+                className="card-container p-0 overflow-hidden border border-border dark:border-slate-600 group relative dark:bg-darksurface"
+              >
                 <Link to={`/house/${house._id}`}>
-                  <div className="h-48 overflow-hidden bg-gray-200">
-                    <img 
-                      src={house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'} 
-                      alt={house.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  <div className="h-48 overflow-hidden bg-gray-200 dark:bg-slate-700">
+                    <img
+                      src={
+                        house.images?.[0]?.url ||
+                        'https://images.unsplash.com/photo-1560518883-ce09059eeffa'
+                      }
+                      alt={house.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <div className="p-4 bg-white">
-                    <h4 className="font-semibold text-lg line-clamp-1">{house.title}</h4>
+                  <div className="p-4 bg-white dark:bg-darksurface">
+                    <h4 className="font-semibold text-lg line-clamp-1 text-brandNavy dark:text-white">
+                      {house.title}
+                    </h4>
                     <div className="flex items-center text-textSecondary text-sm mb-3">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      <span className="truncate">{house.location?.area}, {house.location?.city}</span>
+                      <MapPin className="h-3 w-3 mr-1 shrink-0" />
+                      <span className="truncate">
+                        {house.location?.area}, {house.location?.city}
+                      </span>
                     </div>
-                    <p className="text-primary font-bold text-lg">KES {house.pricing?.pricePerMonth.toLocaleString()} <span className="text-sm font-normal text-textSecondary">/mo</span></p>
+                    <p className="text-primary font-bold text-lg">
+                      ETB {house.pricing?.pricePerMonth?.toLocaleString() ?? '—'}{' '}
+                      <span className="text-sm font-normal text-textSecondary">/mo</span>
+                    </p>
                   </div>
                 </Link>
-                <button onClick={() => removeFavorite(house._id)} className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white text-error rounded-full shadow-sm transition-colors">
+                <button
+                  type="button"
+                  onClick={() => removeFavorite(house._id)}
+                  className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-darksurface/90 hover:bg-white text-error rounded-full shadow-sm transition-colors"
+                  aria-label="Remove from saved"
+                >
                   <Trash2 className="h-5 w-5" />
                 </button>
               </div>

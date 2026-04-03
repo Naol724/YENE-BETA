@@ -15,9 +15,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'House Rental Platform',
-        short_name: 'HouseRental',
-        description: 'Find and list rental properties',
+        name: 'YENE BET',
+        short_name: 'YENE BET',
+        description: 'Find and list rental properties in Ethiopia',
         theme_color: '#0066CC',
         background_color: '#FFFFFF',
         display: 'standalone',
@@ -40,6 +40,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/localhost:\d+\/api\/.*/i,
+            handler: 'NetworkOnly',
+          },
           {
             urlPattern: /^https:\/\/api\.houserent\.com\/api\/.*/i,
             handler: 'NetworkFirst',

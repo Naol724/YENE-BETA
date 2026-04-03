@@ -4,7 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
+  html.dark body {
+    @apply bg-darkbg text-slate-100;
+  }
   body {
     @apply bg-background text-textPrimary font-sans antialiased;
   }
@@ -46,8 +59,22 @@
 }
 
 @layer components {
+  /* Hex backgrounds: avoid @apply bg-navy / bg-brandTeal — "navy" conflicts with the CSS color keyword in some PostCSS/Tailwind builds */
   .btn-primary {
-    @apply bg-primary text-white font-medium h-12 px-6 rounded-lg shadow-sm hover:shadow-md hover:bg-blue-700 transition-all flex items-center justify-center;
+    @apply text-white font-medium h-12 px-6 rounded-md shadow-sm transition-all flex items-center justify-center uppercase tracking-wide text-sm;
+    background-color: #1a2b48;
+  }
+  .btn-primary:hover {
+    @apply shadow-md;
+    background-color: #000000;
+  }
+  .btn-teal {
+    @apply text-white font-medium h-11 px-5 rounded-md shadow-sm transition-all flex items-center justify-center;
+    background-color: #149b9c;
+  }
+  .btn-teal:hover {
+    @apply shadow-md;
+    background-color: #0f7c7d;
   }
   .btn-secondary {
     @apply bg-secondary text-white font-medium h-12 px-6 rounded-lg shadow-sm hover:shadow-md hover:bg-red-500 transition-all flex items-center justify-center;
@@ -56,6 +83,6 @@
     @apply bg-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-border p-4;
   }
   .input-field {
-    @apply border border-border rounded-lg h-12 px-4 focus:outline-none focus:ring-2 focus:ring-primary w-full bg-white;
+    @apply border border-border rounded-lg h-12 px-4 focus:outline-none focus:ring-2 focus:ring-primary w-full bg-white dark:bg-darksurface dark:border-slate-600 dark:text-slate-100;
   }
 }

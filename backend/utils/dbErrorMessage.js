@@ -15,7 +15,7 @@ function dbErrorMessage(err) {
   }
 
   if (msg.includes('buffering timed out')) {
-    return 'The database is not available right now. Check that MongoDB is running and MONGODB_URI is correct (Atlas: allow your IP in Network Access).';
+    return 'Database is not connected. In MongoDB Atlas: Network Access → add your IP (or 0.0.0.0/0 for dev). Check MONGODB_URI in backend/.env.';
   }
   if (
     name === 'MongoServerSelectionError' ||

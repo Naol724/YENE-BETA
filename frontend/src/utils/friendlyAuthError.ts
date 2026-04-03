@@ -15,7 +15,7 @@ export function friendlyAuthError(message: string | undefined | null): string {
     m.includes('buffering timed out') ||
     (m.includes('Operation `') && m.includes('buffering'))
   ) {
-    return 'Database was not ready. Start the API (npm run api), check MONGODB_URI in backend/.env, and in Atlas whitelist your IP under Network Access.';
+    return 'Database was not ready. Start the API (npm run api), confirm MongoDB in backend/.env (Atlas), restart the API after editing .env, and check Atlas → Network Access. If DNS failed before, ensure the API process was restarted after fixing your network.';
   }
   return m;
 }

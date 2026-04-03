@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, CheckCircle2, ShieldCheck, Loader2, X, Download } from 'lucide-react';
 import api from '../utils/api';
@@ -12,6 +12,8 @@ interface Tx {
   createdAt: string;
 }
 
+type UpgradeMode = 'simulated' | 'mpesa';
+
 const PremiumUpgrade: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,20 @@ const PremiumUpgrade: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [confetti, setConfetti] = useState(false);
+  const [mpesaPending, setMpesaPending] = useState(false);
+  const [mpesaMessage, setMpesaMessage] = useState('');
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => stopPolling();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -32,20 +48,66 @@ const PremiumUpgrade: React.FC = () => {
     })();
   }, [success]);
 
-  const simulatePayment = async (e: React.FormEvent) => {
+  const startPremiumPolling = () => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await api.get('/premium/check-limit');
+        if (res.data?.data?.isPremium) {
+          stopPolling();
+          setMpesaPending(false);
+          setSuccess(true);
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 3500);
+          try {
+            const txRes = await api.get('/premium/transactions');
+            setTransactions(txRes.data.data ?? []);
+          } catch {
+            /* ignore */
+          }
+        }
+      } catch {
+        /* keep polling */
+      }
+    }, 3000);
+    window.setTimeout(() => {
+      stopPolling();
+      setMpesaPending(false);
+    }, 120000);
+  };
+
+  const submitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
     try {
-      const res = await api.post('/premium/upgrade', { phoneNumber, amount: 500 });
-      const tx = res.data.data as Tx;
-      setRefId(tx?.referenceId ?? '');
+      const res = await api.post<{
+        success: boolean;
+        mode?: UpgradeMode;
+        message?: string;
+        data?: { referenceId?: string };
+      }>('/premium/upgrade', { phoneNumber, amount: 500 });
+
+      if (!res.data.success) return;
+
+      const mode = res.data.mode;
+      const ref = res.data.data?.referenceId ?? '';
+
+      if (mode === 'mpesa') {
+        setRefId(ref);
+        setMpesaMessage(res.data.message || 'Check your phone to approve the payment.');
+        setMpesaPending(true);
+        setShowModal(false);
+        startPremiumPolling();
+        return;
+      }
+
+      setRefId(ref);
       setSuccess(true);
       setShowModal(false);
       setConfetti(true);
       setTimeout(() => setConfetti(false), 3500);
     } catch (err) {
-      console.error('Payment simulation failed', err);
+      console.error('Premium upgrade failed', err);
     } finally {
       setLoading(false);
     }
@@ -80,12 +142,38 @@ const PremiumUpgrade: React.FC = () => {
     );
   }
 
+  if (mpesaPending) {
+    return (
+      <div className="max-w-xl mx-auto text-center animate-fade-in space-y-6 pb-8">
+        <div className="h-24 w-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
+          <Loader2 className="h-12 w-12 animate-spin" />
+        </div>
+        <h2 className="text-2xl font-bold">Waiting for M-Pesa</h2>
+        <p className="text-textSecondary">{mpesaMessage}</p>
+        <p className="text-sm text-textSecondary">
+          Approve the STK prompt on your phone. This page updates when payment is confirmed (up to 2 minutes).
+        </p>
+        {refId && <p className="font-mono text-xs text-textSecondary">Ref: {refId}</p>}
+        <button
+          type="button"
+          className="text-primary font-semibold text-sm underline"
+          onClick={() => {
+            stopPolling();
+            setMpesaPending(false);
+          }}
+        >
+          Cancel waiting
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto animate-fade-in space-y-10 pb-8">
       <div className="text-center">
         <h1 className="text-[28px] font-bold mb-2">Premium</h1>
         <p className="text-textSecondary max-w-xl mx-auto">
-          KES 500 / month · No long-term contract · Cancel anytime (simulated in this build)
+          KES 500 / month · Pay with M-Pesa when the API is configured, otherwise a dev simulation runs instantly.
         </p>
       </div>
 
@@ -146,7 +234,7 @@ const PremiumUpgrade: React.FC = () => {
             onClick={() => setShowModal(true)}
             className="btn-primary w-full h-14 text-lg bg-success hover:opacity-95 mt-4"
           >
-            Upgrade Now — KES 500
+            Upgrade with M-Pesa
           </button>
         </div>
       </div>
@@ -185,7 +273,7 @@ const PremiumUpgrade: React.FC = () => {
             <h2 id="mpesa-title" className="text-xl font-bold mb-6 pr-10">
               M-Pesa Payment
             </h2>
-            <form onSubmit={simulatePayment}>
+            <form onSubmit={submitPayment}>
               <div className="mb-4">
                 <label className="block font-semibold mb-2" htmlFor="mpesa-phone">
                   Phone number
@@ -195,14 +283,14 @@ const PremiumUpgrade: React.FC = () => {
                   type="text"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="2547XXXXXXXX"
+                  placeholder="2517XXXXXXXX or 2547XXXXXXXX"
                   className="input-field text-lg tracking-wide"
                   required
-                  pattern="254\d{9}"
-                  title="Use format 2547XXXXXXXX"
+                  pattern="(251|254)\d{9}"
+                  title="Use international format: 251… (Ethiopia) or 254… (Kenya)"
                 />
                 <p className="text-xs text-textSecondary mt-2 flex items-center gap-1">
-                  <ShieldCheck className="h-3 w-3" /> Simulated secure payment
+                  <ShieldCheck className="h-3 w-3" /> STK push to this number when M-Pesa env is configured
                 </p>
               </div>
               <div className="bg-surface p-4 rounded-xl mb-6 flex justify-between items-center">
@@ -212,10 +300,10 @@ const PremiumUpgrade: React.FC = () => {
               <button type="submit" disabled={loading} className="btn-primary w-full h-14 bg-success hover:opacity-95 disabled:opacity-60">
                 {loading ? (
                   <>
-                    <Loader2 className="h-6 w-6 mr-2 animate-spin inline" /> Simulating…
+                    <Loader2 className="h-6 w-6 mr-2 animate-spin inline" /> Sending…
                   </>
                 ) : (
-                  'Simulate Payment'
+                  'Pay now'
                 )}
               </button>
             </form>

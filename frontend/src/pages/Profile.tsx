@@ -28,7 +28,7 @@ const Profile: React.FC = () => {
         className="mb-6 inline-flex text-xl font-bold text-primary items-center gap-2 hover:opacity-90 transition-opacity"
       >
         <Home className="h-6 w-6" />
-        HouseRental
+        YENE BET
       </Link>
 
       <div className="card-container p-6 md:p-8 shadow-md">

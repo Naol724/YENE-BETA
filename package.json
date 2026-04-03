@@ -3,13 +3,20 @@
   "private": true,
   "description": "Run npm scripts from this folder; the app lives in /frontend",
   "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
     "dev": "npm run dev --prefix frontend",
     "api": "npm run dev --prefix backend",
+    "api:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/stop-api-port.ps1",
+    "api:5001": "npm run dev:5001 --prefix backend",
     "start:api": "npm start --prefix backend",
     "start": "npm start --prefix frontend",
     "build": "npm run build --prefix frontend",
     "test": "npm test --prefix frontend",
     "lint": "npm run lint --prefix frontend",
     "preview": "npm run preview --prefix frontend"
+  },
+  "dependencies": {
+    "docker": "^1.0.0"
   }
 }

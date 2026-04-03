@@ -1,7 +1,21 @@
 import axios from 'axios';
 
+/** Single source for API base (must end with `/api`). */
+export function getApiBaseUrl(): string {
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+}
+
+/** Socket.IO origin (same host/port as the API, no `/api` path). */
+export function getSocketOrigin(): string {
+  try {
+    return new URL(getApiBaseUrl()).origin;
+  } catch {
+    return 'http://localhost:5000';
+  }
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   }

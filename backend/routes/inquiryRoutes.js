@@ -18,7 +18,6 @@ router.post('/', authorize('RENTER'), createInquiry);
 router.get('/my-inquiries', authorize('RENTER'), getMyInquiries);
 router.get('/received', authorize('OWNER', 'ADMIN'), getReceivedInquiries);
 router.get('/:id', getInquiryById);
-
 router.patch('/:id', authorize('OWNER'), updateInquiryStatus);
 router.post('/:id/reply', replyToInquiry);
 

@@ -1,6 +1,12 @@
 const Inquiry = require('../models/Inquiry');
 const House = require('../models/House');
 
+function participantIds(inquiry) {
+  const renterId = inquiry.renter?._id?.toString() ?? inquiry.renter.toString();
+  const ownerId = inquiry.owner?._id?.toString() ?? inquiry.owner.toString();
+  return { renterId, ownerId };
+}
+
 // @desc    Send an inquiry
 // @route   POST /api/inquiries
 // @access  Private (Renter)
@@ -98,6 +104,43 @@ exports.getReceivedInquiries = async (req, res) => {
   }
 };
 
+// @desc    Get single inquiry thread (renter or owner)
+// @route   GET /api/inquiries/:id
+// @access  Private
+exports.getInquiryById = async (req, res) => {
+  try {
+    const inquiry = await Inquiry.findById(req.params.id)
+      .populate('property', 'title images pricing location status')
+      .populate('owner', 'fullName phone email avatar')
+      .populate('renter', 'fullName phone email avatar')
+      .populate('replies.sender', 'fullName');
+
+    if (!inquiry) {
+      return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    }
+
+    const uid = req.user._id.toString();
+    const { renterId, ownerId } = participantIds(inquiry);
+    if (uid !== renterId && uid !== ownerId) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (uid === ownerId) {
+      if (inquiry.status === 'Pending') {
+        inquiry.status = 'Read';
+      }
+      inquiry.ownerLastReadAt = new Date();
+    } else {
+      inquiry.renterLastReadAt = new Date();
+    }
+    await inquiry.save();
+
+    res.status(200).json({ success: true, data: inquiry });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Update status (Read, Responded)
 // @route   PATCH /api/inquiries/:id
 // @access  Private (Owner)
@@ -106,8 +149,8 @@ exports.updateInquiryStatus = async (req, res) => {
     const inquiry = await Inquiry.findById(req.params.id);
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
-    if (inquiry.owner.toString() !== req.user.id) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (inquiry.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
     inquiry.status = req.body.status || 'Read';
@@ -127,20 +170,28 @@ exports.replyToInquiry = async (req, res) => {
     const inquiry = await Inquiry.findById(req.params.id);
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
-    // Validate participants
-    if (inquiry.owner.toString() !== req.user.id && inquiry.renter.toString() !== req.user.id) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
+    const { renterId, ownerId } = participantIds(inquiry);
+    const uid = req.user._id.toString();
+    if (uid !== ownerId && uid !== renterId) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'Please add a message' });
+    }
+    if (message.length > 500) {
+      return res.status(400).json({ success: false, message: 'Message cannot be more than 500 characters' });
     }
 
     const replyArgs = {
-      sender: req.user.id,
-      message: req.body.message
+      sender: req.user._id,
+      message
     };
 
     inquiry.replies.push(replyArgs);
 
-    // Auto update status if owner replies
-    if (req.user.id === inquiry.owner.toString()) {
+    if (uid === ownerId) {
       inquiry.status = 'Responded';
     } else {
       inquiry.status = 'Pending';
@@ -148,7 +199,20 @@ exports.replyToInquiry = async (req, res) => {
 
     await inquiry.save();
 
-    res.status(200).json({ success: true, data: inquiry });
+    const populated = await Inquiry.findById(inquiry._id)
+      .populate('property', 'title images pricing location status')
+      .populate('owner', 'fullName phone email avatar')
+      .populate('renter', 'fullName phone email avatar')
+      .populate('replies.sender', 'fullName');
+
+    const realtime = req.app.get('io');
+    if (realtime) {
+      realtime.to(`inquiry:${inquiry._id.toString()}`).emit('inquiry:updated', {
+        inquiryId: inquiry._id.toString(),
+      });
+    }
+
+    res.status(200).json({ success: true, data: populated });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

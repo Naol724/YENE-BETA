@@ -60,7 +60,7 @@ export default function OwnerLayout() {
       <aside className="hidden md:flex flex-col w-60 shrink-0 border-r border-border bg-white min-h-screen sticky top-0 h-screen">
         <div className="p-4 border-b border-border">
           <NavLink to="/" className="text-lg font-bold text-primary">
-            HouseRental
+            YENE BET
           </NavLink>
           <p className="text-xs text-textSecondary mt-1">Owner dashboard</p>
         </div>
