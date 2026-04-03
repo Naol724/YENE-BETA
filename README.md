@@ -113,6 +113,8 @@ Returns JSON including database connection state.
 
 More detail: [API_DOCS.md](API_DOCS.md), [UI_FLOW.md](UI_FLOW.md).
 
+Deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md) for separate frontend/backend hosting.
+
 ## M-Pesa (premium payments)
 
 Owner premium checkout can use **Safaricom M-Pesa STK Push** (sandbox: `apisandbox.safaricom.et`) when these are set in `backend/.env`:

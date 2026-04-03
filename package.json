@@ -14,7 +14,11 @@
     "build": "npm run build --prefix frontend",
     "test": "npm test --prefix frontend",
     "lint": "npm run lint --prefix frontend",
-    "preview": "npm run preview --prefix frontend"
+    "preview": "npm run preview --prefix frontend",
+    "docker:build:backend": "docker build -t renatalwpa-backend ./backend",
+    "docker:build:frontend": "docker build -t renatalwpa-frontend --build-arg VITE_API_URL=http://localhost:5000/api ./frontend",
+    "docker:run:backend": "docker run --rm -p 5000:5000 --env-file backend/.env renatalwpa-backend",
+    "docker:run:frontend": "docker run --rm -p 8080:80 renatalwpa-frontend"
   },
   "dependencies": {
     "docker": "^1.0.0"
