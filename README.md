@@ -20,11 +20,12 @@ A progressive web app for browsing rental listings, saving favorites, messaging 
 
 ```
 RenatalWPA/
-├── backend/          # REST API (port 5000 by default)
+├── backend/          # REST API (port from env, default 5000 locally)
 ├── frontend/         # Vite dev server (port 5173 by default)
 ├── package.json      # Convenience scripts that delegate to frontend/backend
 ├── API_DOCS.md       # API reference
-└── UI_FLOW.md        # UI / flow notes
+├── UI_FLOW.md        # UI / flow notes
+└── DEPLOYMENT.md     # Separate frontend/backend deployment
 ```
 
 ## Quick start (local)
@@ -49,7 +50,7 @@ Edit `backend/.env`:
 
 - **`MONGODB_URI`** — Atlas connection string. If the password contains `@`, URL-encode it as `%40`.
 - **`JWT_SECRET`** — Use a long random string in production (see below).
-- **`FRONTEND_URL`** — Must match the Vite origin, e.g. `http://localhost:5173`.
+- **`FRONTEND_URL`** — Must match the browser origin where the SPA runs, e.g. `http://localhost:5173`. If Vite picks another port (e.g. 5174), set this to match.
 
 In **Atlas → Network Access**, allow your current IP (or `0.0.0.0/0` for development only).
 
@@ -72,7 +73,7 @@ Restart Vite after changing `frontend/.env`.
 npm run api
 ```
 
-Wait until you see **`MongoDB connected`** (the server listens only after a successful DB connection).
+The HTTP server starts immediately. MongoDB may connect shortly after; wait until you see **`MongoDB connected`** for live data. If port `5000` is already in use, stop the other Node process or run the API on another port (see [Troubleshooting (local)](#troubleshooting-local)).
 
 **Terminal B — frontend**
 
@@ -80,7 +81,7 @@ Wait until you see **`MongoDB connected`** (the server listens only after a succ
 npm run dev
 ```
 
-Open **http://localhost:5173**.
+Open the URL Vite prints (often **http://localhost:5173**).
 
 ### Root `package.json` scripts
 
@@ -95,6 +96,11 @@ Open **http://localhost:5173**.
 | `npm test` | Run frontend unit tests (Vitest) |
 | `npm run lint` | Lint the frontend |
 
+## Troubleshooting (local)
+
+- **“Port 5000 is already in use”** — Only one process can bind to a port. Stop duplicate backends (Task Manager → end extra `node.exe`, or find the PID and stop it), then run `npm run api` once. Alternatively use `npm run api:5001` from the repo root and set `VITE_API_URL=http://localhost:5001/api` in `frontend/.env`, then restart Vite.
+- **Vite uses 5174 instead of 5173** — Another app is using 5173. Either free 5173 or set `FRONTEND_URL` in `backend/.env` to the origin Vite shows (e.g. `http://localhost:5174`) so CORS matches.
+
 ## Health check
 
 With the API running:
@@ -103,7 +109,7 @@ With the API running:
 GET http://localhost:5000/api/health
 ```
 
-Returns JSON including database connection state.
+(Use your real host/port in production.) Returns JSON including database connection state (`ok` may be false until MongoDB is connected).
 
 ## Features (high level)
 
@@ -113,7 +119,7 @@ Returns JSON including database connection state.
 
 More detail: [API_DOCS.md](API_DOCS.md), [UI_FLOW.md](UI_FLOW.md).
 
-Deployment guide: [DEPLOYMENT.md](DEPLOYMENT.md) for separate frontend/backend hosting.
+Deployment (frontend and backend separately): [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## M-Pesa (premium payments)
 
@@ -141,6 +147,16 @@ Local testing: run the API behind a tunnel and set `MPESA_CALLBACK_URL` to `http
 - Set **`FRONTEND_URL`** to your deployed SPA origin for CORS.
 - Set **`VITE_API_URL`** at build time for the frontend to your public API base URL **including `/api`**.
 - The API uses **`trust proxy`** in production for correct client IPs behind a reverse proxy.
+
+### Hosting platforms (e.g. Render, Railway)
+
+Hosts inject a **dynamic `PORT`**. The API uses:
+
+```js
+const PORT = process.env.PORT || 5000;
+```
+
+The server listens with **`httpServer.listen(PORT, ...)`** (not `app.listen`), because **Socket.IO** shares the same HTTP server. Do not hardcode `5000` in code; set `PORT` via the platform or leave the default for local dev.
 
 ## Rate limiting
 

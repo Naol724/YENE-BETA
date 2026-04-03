@@ -223,7 +223,7 @@ app.set('io', io);
 
 // Listen first so the frontend always has a server to call; MongoDB connects in the background.
 httpServer.listen(PORT, () => {
-  console.log(`API listening on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
   console.log(`CORS origin: ${frontendOrigin}`);
   console.log('[socket] Real-time inquiry updates enabled');
 });
