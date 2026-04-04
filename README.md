@@ -3,11 +3,13 @@
 ## Screenshots
 ### Home Page
 ![Home Screen](./frontend/public/yenebeta1.png)
-## Description
+## Feature house DarkM.
 ![Description](./frontend/public/yenabeta2.png)
+## House DarkM
 ![Feature house](./frontend/public/yenebeta4.png)
+## Darkmode
 ![Login](./frontend/public/yenebeta3.png)
-### Dashboard
+### Listining DarkM.
 ![Message](./frontend/public/yenebeta5.png)
 
 A progressive web app for browsing rental listings, saving favorites, messaging owners, and managing properties from an owner dashboard. The repo is a **monorepo**: a **Node.js + Express + MongoDB** API in `backend/` and a **Vite + React + TypeScript** SPA in `frontend/`.
