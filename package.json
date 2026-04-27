@@ -21,6 +21,20 @@
     "docker:run:frontend": "docker run --rm -p 8080:80 renatalwpa-frontend"
   },
   "dependencies": {
-    "docker": "^1.0.0"
+    "axios": "^1.15.2",
+    "cors": "^2.8.6",
+    "docker": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.11.0",
+    "mongoose": "^9.5.0",
+    "morgan": "^1.10.1",
+    "react": "^19.2.5",
+    "react-hot-toast": "^2.6.0",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.14.2",
+    "socket.io": "^4.8.3"
   }
 }

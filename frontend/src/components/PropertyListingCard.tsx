@@ -14,13 +14,21 @@ export type HouseCardModel = {
   _id: string;
   title: string;
   images?: { url?: string }[];
-  location: { city: string; area: string };
-  pricing: { pricePerMonth: number };
+  location: { city: string; area: string; address?: string };
+  pricing: { pricePerMonth: number; securityDeposit?: number };
   bedrooms: number;
   bathrooms: number;
   squareFootage?: number;
   isPremium?: boolean;
   createdAt?: string;
+  propertyType?: string;
+  description?: string;
+  amenities?: string[];
+  rules?: {
+    petFriendly?: boolean;
+    smokingAllowed?: boolean;
+    eventsAllowed?: boolean;
+  };
 };
 
 type BadgeKind = 'For Rent' | 'For Sale' | 'Featured';
@@ -190,15 +198,27 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
 
       <div className={variant === 'grid' ? 'flex flex-col flex-1 min-h-0' : undefined}>
         <div className="px-4 sm:px-5 pt-4 pb-3 cursor-pointer" onClick={openDetail}>
-          <h3 className="font-bold text-brandNavy dark:text-slate-100 text-lg leading-snug line-clamp-2">
-            {house.title}
-          </h3>
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-bold text-brandNavy dark:text-slate-100 text-lg leading-snug line-clamp-2 flex-1">
+              {house.title}
+            </h3>
+            {house.propertyType && (
+              <span className="text-xs font-semibold text-brandTeal bg-brandTeal/10 px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap">
+                {house.propertyType}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 text-textSecondary dark:text-darkmuted text-sm mt-2">
             <MapPin className="h-4 w-4 shrink-0" />
-            <span>
+            <span className="truncate">
               {house.location.city}, {house.location.area}
             </span>
           </div>
+          {house.description && (
+            <p className="text-xs text-textSecondary dark:text-darkmuted mt-2 line-clamp-2">
+              {house.description}
+            </p>
+          )}
         </div>
 
         <hr className="border-border dark:border-slate-600 mx-4 sm:mx-5" />
@@ -217,6 +237,23 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
             <span className="truncate">{areaLabel}</span>
           </div>
         </div>
+
+        {house.amenities && house.amenities.length > 0 && (
+          <div className="px-4 sm:px-5 py-3 border-t border-border dark:border-slate-600 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="flex flex-wrap gap-1">
+              {house.amenities.slice(0, 3).map((amenity, i) => (
+                <span key={i} className="text-xs bg-slate-200 dark:bg-slate-700 text-textPrimary dark:text-slate-200 px-2 py-1 rounded-full">
+                  {amenity}
+                </span>
+              ))}
+              {house.amenities.length > 3 && (
+                <span className="text-xs bg-slate-200 dark:bg-slate-700 text-textPrimary dark:text-slate-200 px-2 py-1 rounded-full">
+                  +{house.amenities.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-surface dark:bg-slate-800/50 px-4 sm:px-5 py-2.5 border-t border-border dark:border-slate-600">
           <p className="text-xs text-textSecondary dark:text-darkmuted">{formatPublished(house.createdAt)}</p>

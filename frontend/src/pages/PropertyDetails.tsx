@@ -271,14 +271,50 @@ const PropertyDetails: React.FC = () => {
                 </div>
               ) : (
                 <form onSubmit={submitInquiry} className="space-y-4">
-                  <p className="text-sm text-textSecondary">
-                    Introduce yourself and ask about availability or details (10–500 characters).
-                  </p>
+                  <div>
+                    <p className="text-sm font-semibold text-textPrimary mb-2">Ask the owner a question</p>
+                    <p className="text-sm text-textSecondary">
+                      Introduce yourself and ask about availability, pricing, amenities, or any other details (10–500 characters).
+                    </p>
+                  </div>
                   {inquiryError && (
                     <div className="rounded-lg bg-red-50 border border-error/30 text-error text-sm px-4 py-3">
                       {inquiryError}
                     </div>
                   )}
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <p className="text-xs font-semibold text-textSecondary mb-2">Quick prompts:</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setInquiryMessage('Is this property still available?')}
+                        className="text-xs bg-white border border-slate-200 text-textPrimary px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        Available?
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInquiryMessage('Can we schedule a viewing for this property?')}
+                        className="text-xs bg-white border border-slate-200 text-textPrimary px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        Schedule viewing
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInquiryMessage('What utilities are included in the rent?')}
+                        className="text-xs bg-white border border-slate-200 text-textPrimary px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        Utilities included?
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInquiryMessage('What is the earliest move-in date?')}
+                        className="text-xs bg-white border border-slate-200 text-textPrimary px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                      >
+                        Move-in date?
+                      </button>
+                    </div>
+                  </div>
                   <textarea
                     value={inquiryMessage}
                     onChange={(e) => setInquiryMessage(e.target.value)}
@@ -303,7 +339,7 @@ const PropertyDetails: React.FC = () => {
                           Sending…
                         </>
                       ) : (
-                        'Send'
+                        'Send Message'
                       )}
                     </button>
                   </div>
@@ -455,6 +491,40 @@ const PropertyDetails: React.FC = () => {
               )}
             </div>
           </div>
+
+          {house.rules && (
+            <div className="border-t border-border pt-6 pb-6">
+              <h3 className="text-lg font-bold mb-4">House rules</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {house.rules.petFriendly !== undefined && (
+                  <div className={`p-3 rounded-lg border ${house.rules.petFriendly ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                    <p className={`text-sm font-semibold ${house.rules.petFriendly ? 'text-green-800' : 'text-red-800'}`}>
+                      {house.rules.petFriendly ? '🐾 Pets Allowed' : '🚫 No Pets'}
+                    </p>
+                  </div>
+                )}
+                {house.rules.smokingAllowed !== undefined && (
+                  <div className={`p-3 rounded-lg border ${house.rules.smokingAllowed ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+                    <p className={`text-sm font-semibold ${house.rules.smokingAllowed ? 'text-orange-800' : 'text-green-800'}`}>
+                      {house.rules.smokingAllowed ? '🚬 Smoking OK' : '✓ No Smoking'}
+                    </p>
+                  </div>
+                )}
+                {house.rules.eventsAllowed !== undefined && (
+                  <div className={`p-3 rounded-lg border ${house.rules.eventsAllowed ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <p className={`text-sm font-semibold ${house.rules.eventsAllowed ? 'text-purple-800' : 'text-slate-800'}`}>
+                      {house.rules.eventsAllowed ? '🎉 Events OK' : '🤐 No Events'}
+                    </p>
+                  </div>
+                )}
+                {house.rules.additionalRules && (
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 col-span-2 md:col-span-3">
+                    <p className="text-sm text-blue-800"><span className="font-semibold">Additional Rules:</span> {house.rules.additionalRules}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-1">

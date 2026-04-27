@@ -288,45 +288,50 @@ const Inquiries: React.FC = () => {
         {selectedInquiry ? (
           <>
             {/* Chat header */}
-            <div className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-slate-200/90 dark:border-slate-700 bg-white/95 dark:bg-darksurface/95 backdrop-blur-md shadow-sm z-10">
-              <button
-                type="button"
-                className="md:hidden p-2 -ml-2 rounded-lg text-textSecondary hover:bg-slate-100 dark:hover:bg-slate-800"
-                onClick={() => setSelectedInquiry(null)}
-                aria-label="Back to conversations"
-              >
-                ←
-              </button>
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brandTeal to-brandNavy flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-md">
-                {otherPartyName(selectedInquiry, user?.role)
-                  .split(' ')
-                  .map((w) => w[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-brandNavy dark:text-white truncate">
-                    {otherPartyName(selectedInquiry, user?.role)}
-                  </h3>
-                  {realtimeOk && (
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brandTeal bg-brandTeal/15 px-2 py-0.5 rounded-full">
-                      <span className="h-1.5 w-1.5 rounded-full bg-brandTeal animate-pulse" aria-hidden />
-                      Live
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-textSecondary dark:text-darkmuted truncate">{propertyTitle(selectedInquiry)}</p>
-              </div>
-              {typeof selectedInquiry.owner === 'object' && selectedInquiry.owner?.phone && user?.role === 'RENTER' && (
-                <a
-                  href={`tel:${selectedInquiry.owner.phone}`}
-                  className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-border dark:border-slate-600 text-brandTeal hover:bg-slate-50 dark:hover:bg-slate-800"
-                  aria-label="Call"
+            <div className="shrink-0 border-b border-slate-200/90 dark:border-slate-700 bg-white/95 dark:bg-darksurface/95 backdrop-blur-md shadow-sm z-10">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <button
+                  type="button"
+                  className="md:hidden p-2 -ml-2 rounded-lg text-textSecondary hover:bg-slate-100 dark:hover:bg-slate-800"
+                  onClick={() => setSelectedInquiry(null)}
+                  aria-label="Back to conversations"
                 >
-                  <Phone className="h-4 w-4" />
-                </a>
+                  ←
+                </button>
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brandTeal to-brandNavy flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-md">
+                  {otherPartyName(selectedInquiry, user?.role)
+                    .split(' ')
+                    .map((w) => w[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-brandNavy dark:text-white truncate">
+                      {otherPartyName(selectedInquiry, user?.role)}
+                    </h3>
+                    {realtimeOk && (
+                      <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brandTeal bg-brandTeal/15 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-brandTeal animate-pulse" aria-hidden />
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-textSecondary dark:text-darkmuted truncate">{propertyTitle(selectedInquiry)}</p>
+                </div>
+                {typeof selectedInquiry.owner === 'object' && selectedInquiry.owner?.phone && user?.role === 'RENTER' && (
+                  <a
+                    href={`tel:${selectedInquiry.owner.phone}`}
+                    className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-border dark:border-slate-600 text-brandTeal hover:bg-slate-50 dark:hover:bg-slate-800"
+                    aria-label="Call"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
+              {typeof selectedInquiry.property === 'object' && selectedInquiry.property?.images?.[0]?.url && (
+                <div className="h-1.5 bg-gradient-to-r from-brandTeal via-brandNavy to-brandTeal" aria-hidden />
               )}
             </div>
 
