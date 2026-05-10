@@ -21,12 +21,13 @@ export const SearchBar: React.FC<Props> = ({ compact, className = '' }) => {
           to="/search"
           className="relative flex items-center rounded-full border border-border dark:border-slate-600 bg-white dark:bg-darksurface shadow-md hover:shadow-lg transition-shadow group"
         >
-          <Search className="absolute left-4 h-5 w-5 text-textSecondary group-hover:text-brandTeal pointer-events-none" />
-          <span className="block w-full py-3.5 pl-12 pr-14 text-textSecondary dark:text-darkmuted text-sm md:text-base">
-            Search by location, price, or property type…
+          <Search className="absolute left-3 sm:left-4 h-4 w-4 sm:h-5 sm:w-5 text-textSecondary group-hover:text-brandTeal pointer-events-none" />
+          <span className="block w-full py-2.5 sm:py-3.5 pl-10 sm:pl-12 pr-12 sm:pr-14 text-textSecondary dark:text-darkmuted text-xs sm:text-sm md:text-base">
+            <span className="hidden sm:inline">Search by location, price, or property type…</span>
+            <span className="sm:hidden">Search properties…</span>
           </span>
-          <span className="absolute right-2 p-2 rounded-full bg-surface dark:bg-slate-700 group-hover:bg-brandTeal/10">
-            <Filter className="h-4 w-4 text-brandTeal" />
+          <span className="absolute right-2 p-1.5 sm:p-2 rounded-full bg-surface dark:bg-slate-700 group-hover:bg-brandTeal/10">
+            <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brandTeal" />
           </span>
         </Link>
       </motion.div>
@@ -44,12 +45,13 @@ export const SearchBar: React.FC<Props> = ({ compact, className = '' }) => {
         to="/search"
         className="relative flex items-center rounded-full border border-white/50 dark:border-slate-600 bg-white/95 dark:bg-darksurface/95 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all group"
       >
-        <Search className="absolute left-4 h-5 w-5 text-textSecondary group-hover:text-brandTeal pointer-events-none" />
-        <span className="block w-full py-3.5 pl-12 pr-14 text-textSecondary dark:text-darkmuted text-sm md:text-base">
-          Search by location, price, or property type…
+        <Search className="absolute left-3 sm:left-4 h-4 w-4 sm:h-5 sm:w-5 text-textSecondary group-hover:text-brandTeal pointer-events-none" />
+        <span className="block w-full py-2.5 sm:py-3.5 pl-10 sm:pl-12 pr-12 sm:pr-14 text-textSecondary dark:text-darkmuted text-xs sm:text-sm md:text-base">
+          <span className="hidden sm:inline">Search by location, price, or property type…</span>
+          <span className="sm:hidden">Search properties…</span>
         </span>
-        <span className="absolute right-2 p-2 rounded-full bg-surface dark:bg-slate-700 group-hover:bg-brandTeal/10">
-          <Filter className="h-4 w-4 text-brandTeal" />
+        <span className="absolute right-2 p-1.5 sm:p-2 rounded-full bg-surface dark:bg-slate-700 group-hover:bg-brandTeal/10">
+          <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-brandTeal" />
         </span>
       </Link>
     </motion.div>
