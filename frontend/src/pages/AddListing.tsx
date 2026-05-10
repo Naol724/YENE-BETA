@@ -1,5 +1,5 @@
-import ListingWizard from '../components/owner/ListingWizard';
+import PropertyPostForm from '../components/Forms/PropertyPostForm';
 
 export default function AddListing() {
-  return <ListingWizard mode="create" />;
+  return <PropertyPostForm mode="create" />;
 }
