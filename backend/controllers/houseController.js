@@ -30,9 +30,9 @@ exports.getHouses = async (req, res) => {
       query = query.where('amenities').all(amenitiesArr);
     }
 
-    // Only show active listings to guests/renters; owners see their own filters via query
+    // Only show active/available listings to guests/renters; owners see their own filters via query
     if (!req.user || req.user.role === 'RENTER') {
-      query = query.where({ status: 'Active' });
+      query = query.where({ status: { $in: ['Active', 'Available'] } });
     }
 
     // Sort
@@ -91,11 +91,113 @@ exports.getHouse = async (req, res) => {
 // @access  Private (Owner/Admin)
 exports.createHouse = async (req, res) => {
   try {
+    // Validate user permissions
+    if (!['OWNER', 'ADMIN'].includes(req.user.role)) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only owners and admins can create listings' 
+      });
+    }
+
+    // Check if user has reached their listing limit (if not premium)
+    if (req.user.role === 'OWNER' && !req.user.isPremium) {
+      const listingCount = await House.countDocuments({ owner: req.user.id });
+      const freeListingsLimit = 3; // Default free listings
+      
+      if (listingCount >= freeListingsLimit) {
+        return res.status(403).json({ 
+          success: false, 
+          message: `You've reached your free listing limit of ${freeListingsLimit}. Upgrade to premium for unlimited listings.` 
+        });
+      }
+    }
+
+    // Validate required fields
+    const requiredFields = ['title', 'propertyType', 'bedrooms', 'bathrooms', 'location', 'pricing', 'description'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Validate location structure
+    if (!req.body.location.city || !req.body.location.area || !req.body.location.address) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Complete location information is required (city, area, address)' 
+      });
+    }
+
+    // Validate pricing structure
+    if (!req.body.pricing.pricePerMonth || req.body.pricing.pricePerMonth <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Valid monthly price is required' 
+      });
+    }
+
+    // Set owner and default values
     req.body.owner = req.user.id;
+    req.body.status = req.body.status || 'Available';
+    req.body.views = 0;
+
+    // Ensure at least one image is provided
+    if (!req.body.images || req.body.images.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least one property image is required' 
+      });
+    }
+
+    // Set first image as main if not specified
+    if (req.body.images.length > 0) {
+      const hasMainImage = req.body.images.some(img => img.isMain);
+      if (!hasMainImage) {
+        req.body.images[0].isMain = true;
+      }
+    }
+
     const house = await House.create(req.body);
-    res.status(201).json({ success: true, data: house });
+    
+    // Populate owner information for response
+    const populatedHouse = await House.findById(house._id).populate({
+      path: 'owner',
+      select: 'fullName email phone isApproved'
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Property listing created successfully',
+      data: populatedHouse 
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('House creation error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Validation failed',
+        errors 
+      });
+    }
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Duplicate entry detected' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create property listing' 
+    });
   }
 };
 
@@ -106,21 +208,84 @@ exports.updateHouse = async (req, res) => {
   try {
     let house = await House.findById(req.params.id);
 
-    if (!house) return res.status(404).json({ success: false, message: 'Property not found' });
-
-    // Validate ownership
-    if (house.owner.toString() !== req.user.id) {
-      return res.status(401).json({ success: false, message: 'Not authorized to update this listing' });
+    if (!house) {
+      return res.status(404).json({ success: false, message: 'Property not found' });
     }
 
-    house = await House.findByIdAndUpdate(req.params.id, req.body, {
+    // Validate ownership or admin access
+    const isOwner = house.owner.toString() === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+    
+    if (!isOwner && !isAdmin) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Not authorized to update this listing' 
+      });
+    }
+
+    // Validate pricing if provided
+    if (req.body.pricing && req.body.pricing.pricePerMonth) {
+      if (req.body.pricing.pricePerMonth <= 0) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Price must be greater than 0' 
+        });
+      }
+    }
+
+    // Validate bedroom/bathroom counts if provided
+    if (req.body.bedrooms !== undefined && (req.body.bedrooms < 0 || req.body.bedrooms > 20)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bedrooms must be between 0 and 20' 
+      });
+    }
+
+    if (req.body.bathrooms !== undefined && (req.body.bathrooms < 0 || req.body.bathrooms > 20)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Bathrooms must be between 0 and 20' 
+      });
+    }
+
+    // Handle image updates
+    if (req.body.images && req.body.images.length > 0) {
+      const hasMainImage = req.body.images.some(img => img.isMain);
+      if (!hasMainImage) {
+        req.body.images[0].isMain = true;
+      }
+    }
+
+    // Update the house
+    const updatedHouse = await House.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
+    }).populate({
+      path: 'owner',
+      select: 'fullName email phone isApproved'
     });
 
-    res.status(200).json({ success: true, data: house });
+    res.status(200).json({ 
+      success: true, 
+      message: 'Property updated successfully',
+      data: updatedHouse 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('House update error:', error);
+    
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Validation failed',
+        errors 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update property listing' 
+    });
   }
 };
 
