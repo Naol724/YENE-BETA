@@ -7,6 +7,8 @@ import Search from './pages/Search';
 import PropertyDetails from './pages/PropertyDetails';
 import Favorites from './pages/Favorites';
 import Inquiries from './pages/Inquiries';
+import ChatInterface from './components/chat/ChatInterface';
+import ChatList from './components/chat/ChatList';
 import OwnerDashboard from './pages/OwnerDashboard';
 import PremiumUpgrade from './pages/PremiumUpgrade';
 import OwnerListings from './pages/OwnerListings';
@@ -16,6 +18,8 @@ import OwnerInquiries from './pages/OwnerInquiries';
 import OwnerInquiryDetail from './pages/OwnerInquiryDetail';
 import OwnerAnalytics from './pages/OwnerAnalytics';
 import OwnerProfile from './pages/OwnerProfile';
+import AdminDashboard from './components/Admin/AdminDashboard';
+import PaymentDashboard from './components/Payment/PaymentDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
@@ -67,6 +71,22 @@ function AppRoutes() {
             }
           />
           <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <ChatList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat/:id"
+            element={
+              <ProtectedRoute>
+                <ChatInterface />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -79,6 +99,22 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payments"
+            element={
+              <ProtectedRoute>
+                <PaymentDashboard />
               </ProtectedRoute>
             }
           />
