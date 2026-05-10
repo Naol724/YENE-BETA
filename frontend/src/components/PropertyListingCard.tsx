@@ -159,72 +159,72 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
         <img src={img} alt={house.title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
-        <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold text-white bg-brandTeal shadow-sm">
+        <span className="absolute top-2 sm:top-3 left-2 sm:left-3 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-white bg-brandTeal shadow-sm">
           {badge}
         </span>
 
-        <div className="absolute top-3 right-3 flex gap-2">
+        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2">
           <button
             type="button"
             onClick={handleFavorite}
-            className="w-9 h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
             aria-label={saved ? 'Remove from favorites' : 'Save listing'}
           >
-            <Heart className={`h-4 w-4 ${saved ? 'fill-white text-white' : ''}`} />
+            <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${saved ? 'fill-white text-white' : ''}`} />
           </button>
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="w-9 h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
             aria-label="Compare"
           >
-            <ArrowLeftRight className="h-4 w-4" />
+            <ArrowLeftRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         </div>
 
-        <p className="absolute bottom-3 left-4 text-white font-bold text-xl sm:text-2xl drop-shadow-md">
+        <p className="absolute bottom-2 sm:bottom-3 left-3 sm:left-4 text-white font-bold text-lg sm:text-xl md:text-2xl drop-shadow-md">
           ETB {house.pricing.pricePerMonth.toLocaleString()}
-          <span className="text-sm font-normal text-white/90"> /mo</span>
+          <span className="text-xs sm:text-sm font-normal text-white/90"> /mo</span>
         </p>
       </div>
 
       <div className={variant === 'grid' ? 'flex flex-col flex-1 min-h-0' : undefined}>
-        <div className="px-4 sm:px-5 pt-4 pb-3 cursor-pointer" onClick={openDetail}>
-          <h3 className="font-bold text-brandNavy dark:text-slate-100 text-lg leading-snug line-clamp-2">
+        <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3 cursor-pointer" onClick={openDetail}>
+          <h3 className="font-bold text-brandNavy dark:text-slate-100 text-base sm:text-lg leading-snug line-clamp-2">
             {house.title}
           </h3>
-          <div className="flex items-center gap-1.5 text-textSecondary dark:text-darkmuted text-sm mt-2">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>
+          <div className="flex items-center gap-1 sm:gap-1.5 text-textSecondary dark:text-darkmuted text-xs sm:text-sm mt-2">
+            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+            <span className="truncate">
               {house.location.city}, {house.location.area}
             </span>
           </div>
         </div>
 
-        <hr className="border-border dark:border-slate-600 mx-4 sm:mx-5" />
+        <hr className="border-border dark:border-slate-600 mx-3 sm:mx-4 md:mx-5" />
 
-        <div className="px-4 sm:px-5 py-4 flex justify-between text-textSecondary dark:text-darkmuted text-sm">
-          <div className="flex items-center gap-2 min-w-0">
-            <Bed className="h-4 w-4 shrink-0 opacity-80" />
+        <div className="px-3 sm:px-4 md:px-5 py-3 sm:py-4 flex justify-between text-textSecondary dark:text-darkmuted text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <Bed className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
             <span>{house.bedrooms}</span>
           </div>
-          <div className="flex items-center gap-2 min-w-0">
-            <Bath className="h-4 w-4 shrink-0 opacity-80" />
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <Bath className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
             <span>{house.bathrooms}</span>
           </div>
-          <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
-            <Maximize2 className="h-4 w-4 shrink-0 opacity-80" />
-            <span className="truncate">{areaLabel}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-end">
+            <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
+            <span className="truncate text-xs sm:text-sm">{areaLabel}</span>
           </div>
         </div>
 
-        <div className="bg-surface dark:bg-slate-800/50 px-4 sm:px-5 py-2.5 border-t border-border dark:border-slate-600">
+        <div className="bg-surface dark:bg-slate-800/50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 border-t border-border dark:border-slate-600">
           <p className="text-xs text-textSecondary dark:text-darkmuted">{formatPublished(house.createdAt)}</p>
         </div>
       </div>
 
       <div
-        className={`px-3 sm:px-5 py-3 border-t border-border dark:border-slate-600 flex flex-row gap-1.5 sm:gap-2 ${
+        className={`px-2 sm:px-3 md:px-5 py-2 sm:py-3 border-t border-border dark:border-slate-600 flex flex-row gap-1 sm:gap-1.5 md:gap-2 ${
           variant === 'grid' ? 'mt-auto' : ''
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -233,36 +233,38 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
           <>
             <button
               type="button"
-              className="btn-primary flex-1 min-w-0 !h-11 sm:!h-12 text-[10px] sm:text-xs md:text-sm px-2 sm:px-4 py-2 sm:py-2.5"
+              className="btn-primary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-2.5"
               onClick={() => setDemoModalOpen(true)}
             >
               View details
             </button>
             <button
               type="button"
-              className="btn-secondary flex-1 min-w-0 !h-11 sm:!h-12 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-2 sm:py-2.5 inline-flex items-center justify-center gap-1 sm:gap-2"
+              className="btn-secondary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-3 py-1.5 sm:py-2 md:py-2.5 inline-flex items-center justify-center gap-0.5 sm:gap-1 md:gap-2"
               onClick={handleContactOwner}
             >
-              <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Contact owner</span>
+              <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
+              <span className="hidden sm:inline truncate">Contact owner</span>
+              <span className="sm:hidden">Contact</span>
             </button>
           </>
         ) : (
           <>
             <button
               type="button"
-              className="btn-primary flex-1 min-w-0 !h-11 sm:!h-12 text-[10px] sm:text-xs md:text-sm px-2 sm:px-4 py-2 sm:py-2.5"
+              className="btn-primary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-2.5"
               onClick={() => navigate(`/house/${house._id}`)}
             >
               View details
             </button>
             <button
               type="button"
-              className="btn-secondary flex-1 min-w-0 !h-11 sm:!h-12 text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-2 sm:py-2.5 inline-flex items-center justify-center gap-1 sm:gap-2"
+              className="btn-secondary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-3 py-1.5 sm:py-2 md:py-2.5 inline-flex items-center justify-center gap-0.5 sm:gap-1 md:gap-2"
               onClick={handleContactOwner}
             >
-              <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Contact owner</span>
+              <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
+              <span className="hidden sm:inline truncate">Contact owner</span>
+              <span className="sm:hidden">Contact</span>
             </button>
           </>
         )}
