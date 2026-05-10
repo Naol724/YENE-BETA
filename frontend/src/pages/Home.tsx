@@ -128,20 +128,20 @@ const Home: React.FC = () => {
 
   return (
     <div className="animate-fade-in bg-white dark:bg-darkbg transition-colors">
-      <section className="relative min-h-[420px] md:min-h-[560px] flex items-center justify-center px-4 py-16 md:py-24 -mx-0 overflow-hidden">
+      <section className="relative min-h-[400px] sm:min-h-[450px] md:min-h-[560px] flex items-center justify-center px-4 py-12 sm:py-16 md:py-24 -mx-0 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center scale-105 motion-safe:animate-[pulse_20s_ease-in-out_infinite_alternate]"
           style={{ backgroundImage: `url(${HERO_BG})` }}
         />
         <div className="absolute inset-0 bg-brandNavy/50 dark:bg-black/60" />
-        <div className="relative z-10 w-full max-w-3xl mx-auto">
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="bg-white/95 dark:bg-darksurface/95 backdrop-blur-md rounded-2xl shadow-2xl px-6 py-8 md:px-10 md:py-10 border border-white/50 dark:border-slate-600"
+            className="bg-white/95 dark:bg-darksurface/95 backdrop-blur-md rounded-2xl shadow-2xl px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10 border border-white/50 dark:border-slate-600"
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-brandNavy dark:text-white text-center leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brandNavy dark:text-white text-center leading-tight">
               {locale === 'en' ? (
                 <>
                   Find homes for rent in <span className="text-brandTeal">Ethiopia</span>
@@ -150,7 +150,7 @@ const Home: React.FC = () => {
                 t('hero.title')
               )}
             </h1>
-            <p className="mt-4 text-center text-textSecondary dark:text-darkmuted text-sm md:text-base leading-relaxed max-w-xl mx-auto">
+            <p className="mt-4 text-center text-textSecondary dark:text-darkmuted text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
               {t('hero.subtitle')}
               {isAuthenticated ? ` ${user?.fullName.split(' ')[0]},` : ''}
             </p>
@@ -160,7 +160,7 @@ const Home: React.FC = () => {
             <div className="mt-6 flex justify-center">
               <Link
                 to="/listings"
-                className="inline-flex items-center gap-2 rounded-full bg-brandTeal text-white text-sm font-semibold px-8 py-3 shadow-lg hover:bg-brandTealDark transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-brandTeal text-white text-sm font-semibold px-6 sm:px-8 py-3 shadow-lg hover:bg-brandTealDark transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Sparkles className="h-4 w-4" />
                 {t('hero.cta')}
@@ -170,24 +170,24 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-10">
-        <section className="mb-14">
-          <h2 className="text-lg font-semibold text-brandNavy dark:text-white text-center">Popular cities</h2>
-          <p className="text-center text-sm text-textSecondary dark:text-darkmuted mt-1">
+      <div className="container-mobile pt-8 sm:pt-10">
+        <section className="mb-12 sm:mb-14">
+          <h2 className="text-lg sm:text-xl font-semibold text-brandNavy dark:text-white text-center">Popular cities</h2>
+          <p className="text-center text-sm sm:text-base text-textSecondary dark:text-darkmuted mt-1">
             Browse rentals across Ethiopia
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-6 flex flex-wrap justify-center gap-2 sm:gap-3">
             {POPULAR_CITY_CARDS.map((c) => (
               <Link
                 key={c.param}
                 to={`/search?city=${encodeURIComponent(c.param)}`}
-                className="px-4 py-2 rounded-full bg-surface dark:bg-darksurface border border-border dark:border-slate-600 text-sm font-medium text-brandNavy dark:text-slate-200 hover:border-brandTeal hover:text-brandTeal transition-colors shadow-sm"
+                className="px-3 sm:px-4 py-2 rounded-full bg-surface dark:bg-darksurface border border-border dark:border-slate-600 text-xs sm:text-sm font-medium text-brandNavy dark:text-slate-200 hover:border-brandTeal hover:text-brandTeal transition-colors shadow-sm"
               >
                 {c.name}
               </Link>
             ))}
           </div>
-          <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="mt-8 sm:mt-10 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             {POPULAR_CITY_CARDS.map((c) => (
               <Link
                 key={`card-${c.param}`}
@@ -206,13 +206,13 @@ const Home: React.FC = () => {
                     <p className="text-white/90 text-xs font-medium mt-0.5">{c.tagline}</p>
                   </div>
                 </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-brandTeal">{c.areas}</p>
-                  <p className="text-sm text-textSecondary dark:text-darkmuted mt-2 leading-relaxed flex-1">
+                <div className="p-3 sm:p-4 flex flex-col flex-1">
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-brandTeal">{c.areas}</p>
+                  <p className="text-xs sm:text-sm text-textSecondary dark:text-darkmuted mt-2 leading-relaxed flex-1">
                     {c.highlight}
                   </p>
-                  <p className="text-sm font-semibold text-brandNavy dark:text-white mt-3">{c.sampleFrom}</p>
-                  <span className="mt-3 inline-flex items-center text-sm font-semibold text-brandTeal group-hover:gap-1 transition-all">
+                  <p className="text-xs sm:text-sm font-semibold text-brandNavy dark:text-white mt-3">{c.sampleFrom}</p>
+                  <span className="mt-3 inline-flex items-center text-xs sm:text-sm font-semibold text-brandTeal group-hover:gap-1 transition-all">
                     Explore rentals
                     <span className="ml-1 group-hover:translate-x-0.5 transition-transform" aria-hidden>
                       →
@@ -224,16 +224,16 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center mt-6 sm:mt-8">
           <Link
             to="/search"
-            className="inline-flex items-center justify-center rounded-full bg-brandNavy dark:bg-slate-800 text-white text-sm font-semibold px-8 py-2.5 hover:bg-black dark:hover:bg-slate-700 transition-colors"
+            className="inline-flex items-center justify-center rounded-full bg-brandNavy dark:bg-slate-800 text-white text-sm font-semibold px-6 sm:px-8 py-2.5 hover:bg-black dark:hover:bg-slate-700 transition-colors"
           >
             View all
           </Link>
         </div>
 
-        <section className="mt-14">
+        <section className="mt-12 sm:mt-14">
           {showDemoListings && (
             <div className="mb-6 space-y-3">
               <DemoBanner>
@@ -246,9 +246,9 @@ const Home: React.FC = () => {
               {listingsError && (
                 <div
                   role="status"
-                  className="rounded-xl border border-amber-200/80 dark:border-amber-700/50 bg-amber-50/90 dark:bg-amber-950/30 px-4 py-3 text-sm text-textPrimary dark:text-slate-100"
+                  className="rounded-xl border border-amber-200/80 dark:border-amber-700/50 bg-amber-50/90 dark:bg-amber-950/30 px-3 sm:px-4 py-3 text-sm text-textPrimary dark:text-slate-100"
                 >
-                  <p className="font-medium">Fix live data (optional)</p>
+                  <p className="font-medium text-sm">Fix live data (optional)</p>
                   <p className="mt-1 text-textSecondary dark:text-darkmuted text-xs leading-relaxed">
                     {listingsError === 'offline' ? (
                       <>
@@ -275,13 +275,13 @@ const Home: React.FC = () => {
               )}
             </div>
           )}
-          <h2 className="text-2xl md:text-3xl font-bold text-brandNavy dark:text-white text-center">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brandNavy dark:text-white text-center">
             Explore properties in Ethiopia
           </h2>
-          <div className="mx-auto mt-3 h-1 w-16 bg-brandNavy dark:bg-brandTeal rounded-full" />
+          <div className="mx-auto mt-3 h-1 w-12 sm:w-16 bg-brandNavy dark:bg-brandTeal rounded-full" />
 
-          <div className="mt-8 border-b border-border">
-            <div className="flex justify-center gap-8 md:gap-12">
+          <div className="mt-6 sm:mt-8 border-b border-border">
+            <div className="flex justify-center gap-4 sm:gap-8 md:gap-12 overflow-x-auto">
               {(
                 [
                   { id: 'all' as const, label: 'All properties' },
@@ -293,7 +293,7 @@ const Home: React.FC = () => {
                   key={id}
                   type="button"
                   onClick={() => setListingTab(id)}
-                  className={`pb-3 text-sm font-semibold uppercase tracking-wide border-b-2 transition-colors ${
+                  className={`pb-3 text-xs sm:text-sm font-semibold uppercase tracking-wide border-b-2 transition-colors whitespace-nowrap ${
                     listingTab === id
                       ? 'text-brandTeal border-brandTeal'
                       : 'text-textSecondary border-transparent hover:text-brandNavy'
@@ -305,10 +305,10 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 pb-4 items-stretch">
+          <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pb-4 items-stretch">
             {loading ? (
               <>
-                {[1, 2, 3].map((n) => (
+                {[1, 2, 3, 4, 5, 6].map((n) => (
                   <PropertyCardSkeleton key={n} />
                 ))}
               </>
@@ -332,14 +332,14 @@ const Home: React.FC = () => {
         </section>
 
         {recent.length > 0 && (
-          <section className="mt-12">
-            <h2 className="text-xl font-bold text-brandNavy dark:text-white text-center">Recently viewed</h2>
-            <div className="mt-6 flex gap-4 overflow-x-auto pb-2 hide-scrollbar max-w-4xl mx-auto">
+          <section className="mt-12 sm:mt-16">
+            <h2 className="text-lg sm:text-xl font-bold text-brandNavy dark:text-white text-center">Recently viewed</h2>
+            <div className="mt-6 flex gap-3 sm:gap-4 overflow-x-auto pb-2 hide-scrollbar px-4 sm:px-0">
               {recent.map((item) => (
                 <Link
                   key={item.id}
                   to={`/house/${item.id}`}
-                  className="flex-shrink-0 w-44 rounded-xl overflow-hidden border border-border dark:border-slate-600 bg-white dark:bg-darksurface shadow-sm hover:shadow-md transition-shadow"
+                  className="flex-shrink-0 w-36 sm:w-44 rounded-xl overflow-hidden border border-border dark:border-slate-600 bg-white dark:bg-darksurface shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700">
                     <img
@@ -358,10 +358,10 @@ const Home: React.FC = () => {
           </section>
         )}
 
-        <section className="mt-16 pt-4">
-          <h2 className="text-2xl font-bold text-brandNavy text-center">Ads</h2>
+        <section className="mt-12 sm:mt-16 pt-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-brandNavy text-center">Ads</h2>
           <div className="mx-auto mt-3 h-1 w-12 bg-brandNavy rounded-full" />
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
             {adImages.map((src, i) => (
               <div
                 key={src}
@@ -383,7 +383,7 @@ const Home: React.FC = () => {
                 </span>
                 {i === 1 && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="btn-teal text-sm shadow-lg">View property</span>
+                    <span className="btn-teal text-xs sm:text-sm shadow-lg">View property</span>
                   </div>
                 )}
               </div>
