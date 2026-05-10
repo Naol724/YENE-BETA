@@ -20,6 +20,58 @@
   }
   body {
     @apply bg-background text-textPrimary font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* Mobile-first typography base */
+  h1 {
+    @apply text-2xl sm:text-3xl md:text-4xl font-bold leading-tight;
+  }
+  
+  h2 {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold leading-tight;
+  }
+  
+  h3 {
+    @apply text-lg sm:text-xl md:text-2xl font-semibold leading-tight;
+  }
+  
+  h4 {
+    @apply text-base sm:text-lg md:text-xl font-semibold leading-tight;
+  }
+  
+  p {
+    @apply text-sm sm:text-base leading-relaxed;
+  }
+  
+  /* Mobile-first spacing */
+  .section-padding {
+    @apply py-8 sm:py-12 md:py-16;
+  }
+  
+  .container-padding {
+    @apply px-4 sm:px-6 md:px-8;
+  }
+  
+  /* Mobile-first touch targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px];
+  }
+  
+  /* Mobile-first readable text */
+  .readable-text {
+    @apply text-sm sm:text-base leading-relaxed;
+  }
+  
+  /* Mobile-first card spacing */
+  .card-spacing {
+    @apply p-3 sm:p-4 md:p-6;
+  }
+  
+  /* Mobile-first button spacing */
+  .button-spacing {
+    @apply px-3 sm:px-4 md:px-6 py-2 sm:py-3;
   }
 }
 
@@ -59,30 +111,193 @@
 }
 
 @layer components {
-  /* Hex backgrounds: avoid @apply bg-navy / bg-brandTeal — "navy" conflicts with the CSS color keyword in some PostCSS/Tailwind builds */
+  /* Mobile-first button styles */
   .btn-primary {
-    @apply text-white font-medium h-12 px-6 rounded-md shadow-sm transition-all flex items-center justify-center uppercase tracking-wide text-sm;
+    @apply text-white font-medium h-12 px-4 sm:px-6 rounded-lg shadow-sm transition-all flex items-center justify-center uppercase tracking-wide text-sm w-full sm:w-auto min-h-[48px];
     background-color: #1a2b48;
   }
   .btn-primary:hover {
-    @apply shadow-md;
+    @apply shadow-md transform -translate-y-0.5;
     background-color: #000000;
   }
   .btn-teal {
-    @apply text-white font-medium h-11 px-5 rounded-md shadow-sm transition-all flex items-center justify-center;
+    @apply text-white font-medium h-11 px-4 sm:px-5 rounded-lg shadow-sm transition-all flex items-center justify-center w-full sm:w-auto min-h-[44px];
     background-color: #149b9c;
   }
   .btn-teal:hover {
-    @apply shadow-md;
+    @apply shadow-md transform -translate-y-0.5;
     background-color: #0f7c7d;
   }
   .btn-secondary {
-    @apply bg-secondary text-white font-medium h-12 px-6 rounded-lg shadow-sm hover:shadow-md hover:bg-red-500 transition-all flex items-center justify-center;
+    @apply bg-gray-100 text-gray-700 font-medium h-12 px-4 sm:px-6 rounded-lg shadow-sm hover:shadow-md hover:bg-gray-200 transition-all flex items-center justify-center w-full sm:w-auto min-h-[48px];
   }
   .card-container {
-    @apply bg-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-border p-4;
+    @apply bg-surface rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-border p-3 sm:p-4;
   }
   .input-field {
-    @apply border border-border rounded-lg h-12 px-4 focus:outline-none focus:ring-2 focus:ring-primary w-full bg-white dark:bg-darksurface dark:border-slate-600 dark:text-slate-100;
+    @apply border border-border rounded-lg h-12 px-4 focus:outline-none focus:ring-2 focus:ring-primary w-full bg-white dark:bg-darksurface dark:border-slate-600 dark:text-slate-100 text-base min-h-[48px];
+  }
+  
+  /* Enhanced mobile-first responsive utilities */
+  .mobile-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  .mobile-grid-2 {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2;
+  }
+  .mobile-grid-3 {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  .mobile-flex {
+    @apply flex flex-col sm:flex-row;
+  }
+  .mobile-flex-reverse {
+    @apply flex flex-col-reverse sm:flex-row;
+  }
+  .mobile-center {
+    @apply text-center sm:text-left;
+  }
+  .mobile-center-reverse {
+    @apply text-center sm:text-right;
+  }
+  .mobile-spacing {
+    @apply space-y-4 sm:space-y-0 sm:space-x-4;
+  }
+  .mobile-spacing-y {
+    @apply space-y-3 sm:space-y-4;
+  }
+  .mobile-spacing-x {
+    @apply space-x-3 sm:space-x-4;
+  }
+  
+  /* Enhanced responsive typography */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  /* Responsive containers */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+  .container-tight {
+    @apply px-4 sm:px-6 max-w-4xl mx-auto;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 sm:hidden;
+  }
+  
+  /* Mobile cards */
+  .mobile-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow;
+  }
+  .mobile-card-sm {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-shadow;
+  }
+  
+  /* Mobile forms */
+  .mobile-form {
+    @apply space-y-4 w-full;
+  }
+  .mobile-form-sm {
+    @apply space-y-3 w-full;
+  }
+  
+  /* Mobile tables */
+  .mobile-table {
+    @apply block overflow-x-auto;
+  }
+  
+  /* Mobile modals */
+  .mobile-modal {
+    @apply fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4;
+  }
+  
+  /* Mobile dropdowns */
+  .mobile-dropdown {
+    @apply relative w-full sm:w-auto;
+  }
+  
+  /* Responsive sections */
+  .section-mobile {
+    @apply py-8 sm:py-12 lg:py-16;
+  }
+  .section-mobile-sm {
+    @apply py-6 sm:py-8 lg:py-10;
+  }
+  
+  /* Responsive layouts */
+  .layout-mobile {
+    @apply flex flex-col sm:flex-row;
+  }
+  .layout-mobile-reverse {
+    @apply flex flex-col-reverse sm:flex-row;
+  }
+  
+  /* Responsive spacing */
+  .gap-mobile {
+    @apply gap-4 sm:gap-6;
+  }
+  .gap-mobile-sm {
+    @apply gap-2 sm:gap-4;
+  }
+  .gap-mobile-lg {
+    @apply gap-6 sm:gap-8;
+  }
+  
+  /* Responsive text alignment */
+  .text-mobile-center {
+    @apply text-center sm:text-left;
+  }
+  .text-mobile-right {
+    @apply text-right sm:text-left;
+  }
+  
+  /* Responsive visibility */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+  
+  /* Responsive overflow handling */
+  .overflow-mobile {
+    @apply overflow-x-auto;
+  }
+  .overflow-hidden-mobile {
+    @apply overflow-hidden;
+  }
+  
+  /* Responsive aspect ratios */
+  .aspect-mobile {
+    @apply aspect-video;
+  }
+  .aspect-square-mobile {
+    @apply aspect-square;
+  }
+  
+  /* Responsive positioning */
+  .sticky-mobile {
+    @apply sticky top-0 sm:static;
+  }
+  .fixed-mobile {
+    @apply fixed sm:relative;
   }
 }
