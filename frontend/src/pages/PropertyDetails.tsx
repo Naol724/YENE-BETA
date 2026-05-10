@@ -226,8 +226,8 @@ const PropertyDetails: React.FC = () => {
   const heartClass = heartFilled ? 'text-secondary fill-secondary' : 'text-textPrimary';
 
   return (
-    <div className="pb-24 pt-4 px-0 md:px-8 max-w-6xl mx-auto md:pb-12 animate-fade-in relative">
-      <div className="px-4 md:px-0 mb-4">
+    <div className="pb-4 pt-4 px-0 max-w-6xl mx-auto animate-fade-in relative">
+      <div className="px-4 mb-4">
         <BackNavButton fallbackTo="/listings" />
       </div>
       {inquiryOpen && (
@@ -314,19 +314,19 @@ const PropertyDetails: React.FC = () => {
         </div>
       )}
 
-      <div className="px-4 md:px-0 mb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{house.title}</h1>
-          <p className="text-textSecondary flex items-center gap-1 font-medium">
-            <MapPin className="h-4 w-4" /> {house.location.address}, {house.location.area},{' '}
+      <div className="px-4 md:px-0 mb-4">
+        <div className="mb-3">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1.5">{house.title}</h1>
+          <p className="text-textSecondary flex items-center gap-1 text-sm font-medium">
+            <MapPin className="h-4 w-4 shrink-0" /> {house.location.address}, {house.location.area},{' '}
             {house.location.city}
           </p>
         </div>
-        <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex gap-3 items-center flex-wrap">
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center gap-2 font-medium hover:text-primary transition underline underline-offset-4"
+            className="flex items-center gap-1.5 text-sm font-medium hover:text-primary transition underline underline-offset-4"
           >
             <Share2 className="h-4 w-4" /> {shareCopied ? 'Link copied' : 'Share'}
           </button>
@@ -335,7 +335,7 @@ const PropertyDetails: React.FC = () => {
             onClick={toggleFavorite}
             disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions)}
             title={favoriteHint || undefined}
-            className={`flex items-center gap-2 font-medium hover:text-secondary transition underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${heartClass}`}
+            className={`flex items-center gap-1.5 text-sm font-medium hover:text-secondary transition underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${heartClass}`}
           >
             {favoriteLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -351,7 +351,7 @@ const PropertyDetails: React.FC = () => {
         <p className="px-4 md:px-0 text-sm text-textSecondary mb-2">{favoriteHint}</p>
       )}
 
-      <div className="relative w-full h-[300px] md:h-[500px] md:rounded-2xl overflow-hidden bg-gray-100 group">
+      <div className="relative w-full h-[260px] sm:h-[360px] md:h-[500px] md:rounded-2xl overflow-hidden bg-gray-100 group">
         <img
           src={house.images?.[currentImage]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'}
           alt={house.title}
@@ -364,18 +364,18 @@ const PropertyDetails: React.FC = () => {
               onClick={() =>
                 setCurrentImage((prev) => (prev === 0 ? house.images.length - 1 : prev - 1))
               }
-              className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 bg-white/50 hover:bg-white backdrop-blur rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/70 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md"
             >
-              <ChevronLeft className="h-6 w-6" />
+              <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               type="button"
               onClick={() =>
                 setCurrentImage((prev) => (prev === house.images.length - 1 ? 0 : prev + 1))
               }
-              className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 bg-white/50 hover:bg-white backdrop-blur rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/70 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md"
             >
-              <ChevronRight className="h-6 w-6" />
+              <ChevronRight className="h-5 w-5" />
             </button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 backdrop-blur-md px-3 py-1 rounded-full bg-black/20">
               {house.images.map((_: any, i: number) => (
@@ -389,8 +389,35 @@ const PropertyDetails: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 px-4 md:px-0">
-        <div className="md:col-span-2 space-y-8">
+      {/* Mobile sticky booking bar */}
+      <div className="md:hidden sticky bottom-0 z-30 bg-white dark:bg-darksurface border-t border-border dark:border-slate-700 px-4 py-3 flex items-center gap-3 shadow-lg">
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-brandNavy dark:text-white text-base">
+            ETB {house.pricing.pricePerMonth.toLocaleString()}
+            <span className="text-xs font-normal text-textSecondary"> /mo</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleFavorite}
+          disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions)}
+          className={`p-2.5 rounded-full border border-border disabled:opacity-50 ${heartClass}`}
+          aria-label={isFavorite ? 'Remove from saved' : 'Save'}
+        >
+          {favoriteLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={`h-5 w-5 ${heartFilled ? 'fill-current' : ''}`} />}
+        </button>
+        <button
+          type="button"
+          onClick={openContact}
+          disabled={!!(isAuthenticated && !canUseRenterActions)}
+          className="btn-primary !w-auto px-5 !h-11 text-sm"
+        >
+          <MessageSquare className="h-4 w-4 mr-1.5" /> Contact
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 px-4 md:px-0 pb-4 md:pb-12">
+        <div className="md:col-span-2 space-y-6">
           <div className="flex justify-between items-center border-b border-border pb-6">
             <div>
               <h2 className="text-xl font-bold mb-2">Hosted by {house.owner?.fullName || 'Host'}</h2>
@@ -403,7 +430,7 @@ const PropertyDetails: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4">
+          <div className="grid grid-cols-2 gap-3 py-4">
             <div className="p-4 border border-border rounded-xl flex items-center gap-3">
               <Home className="h-6 w-6 text-primary" />
               <div className="text-sm">
@@ -457,8 +484,8 @@ const PropertyDetails: React.FC = () => {
           </div>
         </div>
 
-        <div className="md:col-span-1">
-          <div className="sticky top-24 bg-white border border-border rounded-2xl p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col gap-4">
+        <div className="hidden md:block md:col-span-1">
+          <div className="sticky top-28 bg-white dark:bg-darksurface border border-border dark:border-slate-600 rounded-2xl p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col gap-4">
             <div className="flex items-end gap-2 text-2xl font-bold">
               ETB {house.pricing.pricePerMonth.toLocaleString()}{' '}
               <span className="text-base text-textSecondary font-normal pb-1">/ month</span>
