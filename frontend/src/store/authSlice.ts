@@ -6,11 +6,11 @@ export interface User {
   fullName: string;
   email: string;
   phone?: string;
-  role: 'RENTER' | 'OWNER';
+  role: 'RENTER' | 'OWNER' | 'ADMIN';
   isApproved?: boolean;
 }
 
-/** Map API role to renter vs owner; non-owner roles become renter. */
+/** Map API role to correct frontend role */
 export function normalizeApiUser(u: {
   id: string;
   fullName: string;
@@ -24,7 +24,7 @@ export function normalizeApiUser(u: {
     fullName: u.fullName,
     email: u.email,
     phone: u.phone,
-    role: u.role === 'OWNER' ? 'OWNER' : 'RENTER',
+    role: u.role === 'OWNER' ? 'OWNER' : u.role === 'ADMIN' ? 'ADMIN' : 'RENTER',
     isApproved: u.isApproved,
   };
 }
