@@ -59,6 +59,9 @@ const inquiries = require('./routes/inquiryRoutes');
 const users = require('./routes/userRoutes');
 const favorites = require('./routes/favoriteRoutes');
 const premium = require('./routes/premiumRoutes');
+const admin = require('./routes/adminRoutes');
+const booking = require('./routes/bookingRoutes');
+const image = require('./routes/imageRoutes');
 
 app.use('/api', apiLimiter);
 app.use('/api', requireMongo);
@@ -68,6 +71,12 @@ app.use('/api/inquiries', inquiries);
 app.use('/api/users', users);
 app.use('/api/favorites', favorites);
 app.use('/api/premium', premium);
+app.use('/api/admin', admin);
+app.use('/api/bookings', booking);
+app.use('/api/upload', image);
+
+// Serve uploaded images statically
+app.use('/uploads', express.static('uploads'));
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -90,9 +99,80 @@ app.get('/api/health', (req, res) => {
 
 const { resolveMongoUri, hasMongoConfiguration } = require('./utils/resolveMongoUri');
 
-const PORT = process.env.PORT || 5000;
+// Dynamic port handling with fallback
+const DEFAULT_PORT = 5000;
+const MAX_PORT_ATTEMPTS = 10;
+let currentPort = parseInt(process.env.PORT) || DEFAULT_PORT;
+let portAttempts = 0;
+
 const resolvedMongo = resolveMongoUri();
 const mongoUri = resolvedMongo || 'mongodb://127.0.0.1:27017/house_rental';
+
+// Function to find available port
+function findAvailablePort(startPort) {
+  return new Promise((resolve, reject) => {
+    const net = require('net');
+    const server = net.createServer();
+    
+    server.listen(startPort, () => {
+      const port = server.address().port;
+      server.close(() => resolve(port));
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(null); // Port is in use
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+// Function to start server with dynamic port
+async function startServer() {
+  try {
+    // Try to find an available port starting from currentPort
+    let availablePort = await findAvailablePort(currentPort);
+    
+    if (!availablePort) {
+      // Try consecutive ports
+      for (let i = 1; i < MAX_PORT_ATTEMPTS; i++) {
+        availablePort = await findAvailablePort(DEFAULT_PORT + i);
+        if (availablePort) {
+          currentPort = availablePort;
+          break;
+        }
+      }
+    }
+    
+    if (!availablePort) {
+      console.error(`\n[api] ERROR: Could not find an available port from ${currentPort} to ${DEFAULT_PORT + MAX_PORT_ATTEMPTS - 1}`);
+      console.error('[api] Please manually stop other Node.js processes or choose a different port range');
+      process.exit(1);
+    }
+    
+    // Start the server on the available port
+    httpServer.listen(availablePort, () => {
+      const actualPort = availablePort;
+      console.log(`\n🚀 Server running successfully on port ${actualPort}`);
+      console.log(`🌐 CORS origin: ${frontendOrigin}`);
+      console.log(`💬 Real-time inquiry updates enabled`);
+      console.log(`📊 Health check: http://localhost:${actualPort}/api/health`);
+      
+      // Show port warning if different from expected
+      if (actualPort !== (parseInt(process.env.PORT) || DEFAULT_PORT)) {
+        console.log(`\n⚠️  Port ${process.env.PORT || DEFAULT_PORT} was busy, using port ${actualPort} instead`);
+        console.log(`📝 Update frontend/.env: VITE_API_URL=http://localhost:${actualPort}/api`);
+      }
+      console.log('');
+    });
+    
+  } catch (error) {
+    console.error('\n[api] ERROR: Failed to start server:', error.message);
+    process.exit(1);
+  }
+}
 
 /** Active URI (may switch to localhost in dev if Atlas SRV/DNS fails). */
 let activeMongoUri = mongoUri;
@@ -221,27 +301,36 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
-// Listen first so the frontend always has a server to call; MongoDB connects in the background.
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`CORS origin: ${frontendOrigin}`);
-  console.log('[socket] Real-time inquiry updates enabled');
-});
+// Start server with dynamic port handling (MongoDB connects in background)
+startServer();
 
+// Enhanced error handling for server
 httpServer.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(
-      `\n[api] Port ${PORT} is already in use — another API is likely still running (only one process per port).\n` +
-        `Fix A — stop the other server: Task Manager → end "Node.js", or PowerShell:\n` +
-        `  Get-NetTCPConnection -LocalPort ${PORT} | Select-Object OwningProcess\n` +
-        `  Stop-Process -Id <PID> -Force\n` +
-        `Fix B — run this API on 5001 instead: npm run api:5001 (from repo root) or npm run dev:5001 inside backend/.\n` +
-        `  Then set VITE_API_URL=http://localhost:5001/api in frontend/.env and restart Vite.\n`
-    );
+    // This should be handled by our dynamic port logic, but fallback just in case
+    console.error(`\n[api] Port ${currentPort} is in use and dynamic port finding failed`);
+    console.error('[api] Please manually stop other Node.js processes or restart the server');
   } else {
-    console.error('[api] HTTP server error:', err.message);
+    console.error('[api] Server error:', err);
   }
   process.exit(1);
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('\n[api] Received SIGTERM, shutting down gracefully');
+  httpServer.close(() => {
+    console.log('[api] Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\n[api] Received SIGINT, shutting down gracefully');
+  httpServer.close(() => {
+    console.log('[api] Server closed');
+    process.exit(0);
+  });
 });
 
 const LOCAL_FALLBACK_URI = 'mongodb://127.0.0.1:27017/house_rental';
