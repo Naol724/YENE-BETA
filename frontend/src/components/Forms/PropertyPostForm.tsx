@@ -14,8 +14,11 @@ import {
   Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import type { RootState } from '../../store';
 import api from '../../utils/api';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { MediaImage } from '../MediaImage';
 
 interface PropertyPostFormProps {
   mode?: 'create' | 'edit';
@@ -116,7 +119,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
       eventsAllowed: initialData?.rules?.eventsAllowed || false,
       additionalRules: initialData?.rules?.additionalRules || ''
     },
-    status: initialData?.status || 'Available',
+    status: initialData?.status || 'Pending',
     availability: {
       availableFrom: initialData?.availability?.availableFrom || new Date().toISOString().split('T')[0],
       minimumStay: initialData?.availability?.minimumStay || '1',
@@ -250,8 +253,11 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
   };
 
   const handleImageUpload = async (files: FileList) => {
-    const validFiles = Array.from(files).filter(file => {
-      const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type);
+    const validFiles = Array.from(files).filter((file) => {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const isValidType =
+        ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type) ||
+        ['jpg', 'jpeg', 'png', 'webp'].includes(ext || '');
       const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
       return isValidType && isValidSize;
     });
@@ -267,36 +273,60 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
     }
 
     for (const file of validFiles) {
-      const formData = new FormData();
-      formData.append('image', file);
+      const uploadBody = new FormData();
+      uploadBody.append('image', file, file.name);
+
+      const progressKey = `${file.name}-${file.size}-${file.lastModified}`;
 
       try {
-        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
-        
-        const response = await api.post('/upload/property-image', formData, {
+        setUploadProgress((prev) => ({ ...prev, [progressKey]: 0 }));
+
+        const response = await api.post('/upload/property-image', uploadBody, {
           onUploadProgress: (progressEvent) => {
             const progress = Math.round(
               (progressEvent.loaded * 100) / (progressEvent.total || 1)
             );
-            setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
-          }
+            setUploadProgress((prev) => ({ ...prev, [progressKey]: progress }));
+          },
         });
 
-        if (response.data.success) {
-          setFormData(prev => ({
+        if (response.data.success && response.data.data) {
+          const uploaded = response.data.data;
+          setFormData((prev) => ({
             ...prev,
-            images: [...prev.images, response.data.data]
+            images: [
+              ...prev.images,
+              {
+                ...uploaded,
+                url: resolveMediaUrl(uploaded.url),
+                isMain: prev.images.length === 0 ? true : Boolean(uploaded.isMain),
+              },
+            ],
           }));
-          toast.success(`${file.name} uploaded successfully`);
+          toast.success('Image uploaded');
+        } else {
+          toast.error(response.data.message || `Failed to upload ${file.name}`);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Upload error:', error);
-        toast.error(`Failed to upload ${file.name}`);
+        let message = `Failed to upload ${file.name}`;
+        if (axios.isAxiosError(error)) {
+          const apiMsg = (error.response?.data as { message?: string } | undefined)?.message;
+          if (apiMsg) message = apiMsg;
+          else if (error.response?.status === 401) {
+            message = 'Please sign in again as an owner to upload images.';
+          } else if (error.response?.status === 403) {
+            message = 'Only property owners can upload listing images.';
+          } else if (!error.response) {
+            message = 'Cannot reach the API. Check that the backend is running and VITE_API_URL is correct.';
+          }
+        }
+        toast.error(message);
       } finally {
-        setUploadProgress(prev => {
-          const newProgress = { ...prev };
-          delete newProgress[file.name];
-          return newProgress;
+        setUploadProgress((prev) => {
+          const next = { ...prev };
+          delete next[progressKey];
+          return next;
         });
       }
     }
@@ -373,7 +403,11 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
       }
 
       if (response.data.success) {
-        toast.success(`Property ${mode === 'create' ? 'created' : 'updated'} successfully!`);
+        toast.success(
+          mode === 'create'
+            ? 'Listing submitted for admin review'
+            : response.data.message || 'Property updated successfully!'
+        );
         onSuccess?.(response.data.data);
         navigate(mode === 'create' ? '/owner/listings' : `/owner/listings/${response.data.data._id}`);
       }
@@ -393,18 +427,20 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-surface/50 dark:bg-darkbg py-8">
       <div className="container-mobile">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {mode === 'create' ? 'Post New Property' : 'Edit Property'}
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  {mode === 'create' ? 'List your rental property for tenants' : 'Update your property information'}
+                <p className="text-gray-600 dark:text-slate-300 mt-1">
+                  {mode === 'create'
+                    ? 'Submit your listing for admin review before it goes public'
+                    : 'Update your property information'}
                 </p>
               </div>
               {onCancel && (
@@ -420,8 +456,8 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                 <Home className="w-5 h-5 mr-2 text-primary" />
                 Basic Information
               </h2>
@@ -429,7 +465,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
               <div className="space-y-4">
                 {/* Title */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Property Title *
                   </label>
                   <input
@@ -450,7 +486,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Property Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Property Type *
                   </label>
                   <select
@@ -467,7 +503,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                 {/* Bedrooms and Bathrooms */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                       Bedrooms *
                     </label>
                     <select
@@ -482,7 +518,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                       Bathrooms *
                     </label>
                     <select
@@ -499,7 +535,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Square Footage */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Square Footage (optional)
                   </label>
                   <input
@@ -521,8 +557,8 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Location */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                 <MapPin className="w-5 h-5 mr-2 text-primary" />
                 Location Information
               </h2>
@@ -530,7 +566,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
               <div className="space-y-4">
                 {/* City */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     City *
                   </label>
                   <select
@@ -546,7 +582,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Area/Sub-city */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Area/Sub-city *
                   </label>
                   <input
@@ -567,7 +603,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Full Address */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Full Address *
                   </label>
                   <textarea
@@ -588,8 +624,8 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Pricing */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                 <DollarSign className="w-5 h-5 mr-2 text-primary" />
                 Pricing Information
               </h2>
@@ -598,7 +634,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                 {/* Price and Currency */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                       Monthly Rent *
                     </label>
                     <input
@@ -619,7 +655,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                       Currency
                     </label>
                     <select
@@ -636,7 +672,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Security Deposit */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Security Deposit (optional)
                   </label>
                   <input
@@ -658,7 +694,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Payment Frequency */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Payment Frequency
                   </label>
                   <select
@@ -674,7 +710,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Utilities Included */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Utilities Included
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -686,7 +722,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                           onChange={() => handleUtilityToggle(utility)}
                           className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-gray-700">{utility}</span>
+                        <span className="text-sm text-gray-700 dark:text-slate-200">{utility}</span>
                       </label>
                     ))}
                   </div>
@@ -695,11 +731,11 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Description */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Property Description</h2>
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Property Description</h2>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                   Description *
                 </label>
                 <textarea
@@ -710,7 +746,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                   maxLength={3000}
                 />
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-600 dark:text-slate-400">
                     {formData.description.length}/3000 characters
                   </span>
                   {errors.description && (
@@ -724,8 +760,8 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Images */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                 <Camera className="w-5 h-5 mr-2 text-primary" />
                 Property Images
               </h2>
@@ -736,12 +772,12 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-                <p className="text-gray-600 mb-2 text-sm sm:text-base">
+                <Upload className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-600 dark:text-slate-400 mx-auto mb-3 sm:mb-4" />
+                <p className="text-gray-600 dark:text-slate-300 mb-2 text-sm sm:text-base">
                   <span className="hidden sm:inline">Drag and drop images here, or click to browse</span>
                   <span className="sm:hidden">Tap to select images</span>
                 </p>
-                <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mb-3 sm:mb-4">
                   JPEG, PNG, WebP up to 5MB each (max 10 images)
                 </p>
                 <input
@@ -770,14 +806,14 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
               {/* Uploaded Images */}
               {formData.images.length > 0 && (
                 <div className="mt-4 sm:mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-slate-200 mb-3">
                     Uploaded Images ({formData.images.length}/10)
                   </h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                     {formData.images.map((image, index) => (
                       <div key={index} className="relative group">
                         <div className="aspect-square rounded-lg overflow-hidden border border-gray-200">
-                          <img
+                          <MediaImage
                             src={image.url}
                             alt={`Property image ${index + 1}`}
                             className="w-full h-full object-cover"
@@ -798,7 +834,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleSetMainImage(index)}
-                                className="p-1 sm:p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100"
+                                className="p-1 sm:p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-textPrimary dark:text-slate-100"
                                 title="Set as main image"
                               >
                                 <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
@@ -807,7 +843,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                             <button
                               type="button"
                               onClick={() => handleImageRemove(index)}
-                              className="p-1 sm:p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100"
+                              className="p-1 sm:p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-slate-700 text-error"
                               title="Remove image"
                             >
                               <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-600" />
@@ -829,8 +865,8 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Amenities */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Amenities & Features</h2>
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Amenities & Features</h2>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {amenities.map(amenity => (
@@ -841,15 +877,15 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
                       onChange={() => handleAmenityToggle(amenity)}
                       className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                     />
-                    <span className="text-sm text-gray-700">{amenity}</span>
+                    <span className="text-sm text-gray-700 dark:text-slate-200">{amenity}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {/* Contact Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
                 <Phone className="w-5 h-5 mr-2 text-primary" />
                 Contact Information
               </h2>
@@ -857,7 +893,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
               <div className="space-y-4">
                 {/* Owner Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Owner Name *
                   </label>
                   <input
@@ -878,7 +914,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     Contact Phone *
                   </label>
                   <input
@@ -898,7 +934,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
                 {/* WhatsApp */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">
                     WhatsApp Number (optional)
                   </label>
                   <input
@@ -919,7 +955,7 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
             </div>
 
             {/* Submit Button */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-darksurface rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
               <button
                 type="submit"
                 disabled={isSubmitting}
