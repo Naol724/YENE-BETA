@@ -8,6 +8,7 @@ import SiteFooter from '../components/SiteFooter';
 const Dashboard: React.FC = () => {
   const { user } = useSelector((s: RootState) => s.auth);
   const isOwner = user?.role === 'OWNER';
+  const isAdmin = user?.role === 'ADMIN';
 
   const cards = [
     {
@@ -41,6 +42,16 @@ const Dashboard: React.FC = () => {
             icon: Home,
             title: 'Post a property',
             desc: 'Create a new listing',
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            to: '/admin',
+            icon: LayoutDashboard,
+            title: 'Admin dashboard',
+            desc: 'Manage users, properties, transactions, and inquiries',
           },
         ]
       : []),
