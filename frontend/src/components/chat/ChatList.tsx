@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import type { RootState } from '../../store';
 import api from '../../utils/api';
 import BackNavButton from '../BackNavButton';
+import { MediaImage } from '../MediaImage';
 
 interface Inquiry {
   _id: string;
@@ -153,7 +154,7 @@ const ChatList: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-darkbg">
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -162,13 +163,13 @@ const ChatList: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-white dark:bg-darkbg">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-white dark:bg-darksurface border-b border-gray-200 dark:border-slate-700 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
             <BackNavButton fallbackTo="/" />
-            <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Messages</h1>
             {unreadCount > 0 && (
               <span className="bg-primary text-white text-xs px-2 py-1 rounded-full">
                 {unreadCount}
@@ -179,19 +180,19 @@ const ChatList: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <Filter className="w-5 h-5 text-gray-600" />
+            <Filter className="w-5 h-5 text-gray-600 dark:text-slate-300" />
           </button>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search messages..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
 
@@ -205,7 +206,7 @@ const ChatList: React.FC = () => {
                 className={`px-3 py-1 rounded-full text-sm transition-colors ${
                   filter === filterOption
                     ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 text-gray-700 dark:text-slate-200 hover:bg-gray-200'
                 }`}
               >
                 {filterOption === 'all' && 'All'}
@@ -221,11 +222,11 @@ const ChatList: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         {filteredInquiries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <MessageSquare className="w-12 h-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <MessageSquare className="w-12 h-12 text-gray-600 dark:text-slate-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {searchTerm ? 'No messages found' : 'No messages yet'}
             </h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-gray-600 dark:text-slate-400 mb-4">
               {searchTerm 
                 ? 'Try adjusting your search terms'
                 : 'Start a conversation by contacting property owners'
@@ -251,14 +252,14 @@ const ChatList: React.FC = () => {
                 <Link
                   key={inquiry._id}
                   to={`/chat/${inquiry._id}`}
-                  className="block hover:bg-gray-50 transition-colors"
+                  className="block hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="px-4 py-3">
                     <div className="flex items-start space-x-3">
                       {/* Property Image */}
                       <div className="flex-shrink-0">
-                        <img
-                          src={inquiry.property.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'}
+                        <MediaImage
+                          src={inquiry.property.images?.[0]?.url}
                           alt={inquiry.property.title}
                           className="w-12 h-12 rounded-lg object-cover"
                         />
@@ -268,27 +269,27 @@ const ChatList: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center space-x-2">
-                            <h3 className="font-medium text-gray-900 truncate">
+                            <h3 className="font-medium text-gray-900 dark:text-white truncate">
                               {participant?.name}
                             </h3>
                             {unread && (
                               <div className="w-2 h-2 bg-primary rounded-full"></div>
                             )}
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-600 dark:text-slate-400">
                             {formatTime(lastMessage.time)}
                           </span>
                         </div>
 
                         <div className="flex items-center space-x-2 mb-1">
-                          <Home className="w-3 h-3 text-gray-400" />
-                          <p className="text-sm text-gray-600 truncate">
+                          <Home className="w-3 h-3 text-gray-600 dark:text-slate-400" />
+                          <p className="text-sm text-gray-600 dark:text-slate-300 truncate">
                             {inquiry.property.title}
                           </p>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-500 truncate">
+                          <p className="text-sm text-gray-600 dark:text-slate-400 truncate">
                             {lastMessage.isOwn && 'You: '}{lastMessage.message}
                           </p>
                           <div className="flex items-center space-x-1">
@@ -297,14 +298,14 @@ const ChatList: React.FC = () => {
                                 New
                               </span>
                             ) : (
-                              <CheckCheck className="w-4 h-4 text-gray-400" />
+                              <CheckCheck className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                             )}
                           </div>
                         </div>
 
                         {/* Property Location */}
                         <div className="flex items-center space-x-2 mt-1">
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-600 dark:text-slate-400">
                             {inquiry.property.location.area}, {inquiry.property.location.city}
                           </span>
                           <span className="text-xs text-primary font-medium">
