@@ -11,6 +11,7 @@ import { isValidEmail, isValidPhoneLoose } from '../utils/validation';
 import { friendlyAuthError } from '../utils/friendlyAuthError';
 import { networkErrorHint, parseApiErrorMessage } from '../utils/parseApiError';
 import { Eye, EyeOff, Home, Loader2 } from 'lucide-react';
+import { LanguageSelect, useI18n } from '../context/I18nContext';
 
 function redirectAfterAuth(
   user: User,
@@ -29,6 +30,7 @@ const Register: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const postAuthPath = getPostAuthRedirectPath(location.state);
   const authUser = useSelector((s: RootState) => s.auth.user);
 
@@ -50,19 +52,19 @@ const Register: React.FC = () => {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.passwordMismatch'));
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('register.passwordShort'));
       return;
     }
     if (!isValidEmail(email)) {
-      setError('Enter a valid email address.');
+      setError(t('login.invalidEmail'));
       return;
     }
     if (!isValidPhoneLoose(phone)) {
-      setError('Enter a valid phone number (at least 9 digits).');
+      setError(t('register.invalidPhone'));
       return;
     }
 
@@ -77,15 +79,31 @@ const Register: React.FC = () => {
       });
 
       if (!data.success || !data.token || !data.user) {
-        setError(friendlyAuthError(data.message ?? 'Could not create account'));
+        setError(friendlyAuthError(data.message ?? t('register.failed')));
         return;
       }
 
       const user = normalizeApiUser(data.user as Parameters<typeof normalizeApiUser>[0]);
-      dispatch(login({ user, token: data.token }));
+      dispatch(
+        login({
+          user,
+          token: data.token,
+          refreshToken: data.refreshToken ?? null,
+        })
+      );
+      const alreadyVerified =
+        typeof data.user === 'object' &&
+        data.user != null &&
+        'isEmailVerified' in data.user &&
+        Boolean((data.user as { isEmailVerified?: boolean }).isEmailVerified);
+      if (alreadyVerified) {
+        toast.success(t('register.success'));
+        redirectAfterAuth(user, navigate, postAuthPath);
+        return;
+      }
       setRegisteredEmail(user.email);
       setRegisterSuccessMessage(data.message ?? null);
-      toast.success('Account created!');
+      toast.success(t('register.success'));
     } catch (err: unknown) {
       const fromBody = parseApiErrorMessage(err);
       if (fromBody) {
@@ -97,7 +115,7 @@ const Register: React.FC = () => {
         setError(net);
         return;
       }
-      setError('Something went wrong. Try again.');
+      setError(t('common.tryAgain'));
     } finally {
       setSubmitting(false);
     }
@@ -110,6 +128,9 @@ const Register: React.FC = () => {
   if (registeredEmail) {
     return (
       <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-10 animate-fade-in">
+        <div className="w-full max-w-md flex justify-end mb-4">
+          <LanguageSelect />
+        </div>
         <Link
           to="/"
           className="mb-8 text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -119,20 +140,19 @@ const Register: React.FC = () => {
         </Link>
 
         <div className="w-full max-w-md card-container p-6 md:p-8 shadow-md space-y-4">
-          <h1 className="text-2xl font-bold text-textPrimary">Account created</h1>
+          <h1 className="text-2xl font-bold text-textPrimary">{t('register.successTitle')}</h1>
           <p className="text-textSecondary text-sm">
-            {registerSuccessMessage ??
-              'Check your email for the verification code, or the API terminal if email is not configured. You can enter the code now or continue to the app and verify later.'}
+            {registerSuccessMessage ?? t('register.successBody')}
           </p>
           <Link
             to="/verify-email"
             state={{ email: registeredEmail }}
             className="btn-primary w-full text-center block"
           >
-            Enter verification code
+            {t('register.enterCode')}
           </Link>
           <button type="button" onClick={finishRegistration} className="btn-secondary w-full">
-            Continue to app
+            {t('register.continueApp')}
           </button>
         </div>
       </div>
@@ -141,6 +161,9 @@ const Register: React.FC = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-10 animate-fade-in">
+      <div className="w-full max-w-md flex justify-end mb-4">
+        <LanguageSelect />
+      </div>
       <Link
         to="/"
         className="mb-8 text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -150,8 +173,8 @@ const Register: React.FC = () => {
       </Link>
 
       <div className="w-full max-w-md card-container p-6 md:p-8 shadow-md">
-        <h1 className="text-2xl font-bold text-textPrimary mb-1">Create your account</h1>
-        <p className="text-textSecondary text-sm mb-6">Sign up to save homes and message owners</p>
+        <h1 className="text-2xl font-bold text-textPrimary mb-1">{t('register.title')}</h1>
+        <p className="text-textSecondary text-sm mb-6">{t('register.subtitle')}</p>
 
         {error && (
           <div
@@ -165,7 +188,7 @@ const Register: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="reg-name" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Full name
+              {t('common.fullName')}
             </label>
             <input
               id="reg-name"
@@ -175,12 +198,12 @@ const Register: React.FC = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="input-field"
-              placeholder="Jane Doe"
+              placeholder={t('register.namePlaceholder')}
             />
           </div>
           <div>
             <label htmlFor="reg-email" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Email
+              {t('common.email')}
             </label>
             <input
               id="reg-email"
@@ -195,7 +218,7 @@ const Register: React.FC = () => {
           </div>
           <div>
             <label htmlFor="reg-phone" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Phone
+              {t('common.phone')}
             </label>
             <input
               id="reg-phone"
@@ -210,7 +233,7 @@ const Register: React.FC = () => {
           </div>
 
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-textPrimary mb-2">How will you use YENE BET?</legend>
+            <legend className="text-sm font-medium text-textPrimary mb-2">{t('register.roleLegend')}</legend>
             <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
                 type="radio"
@@ -219,7 +242,7 @@ const Register: React.FC = () => {
                 onChange={() => setRole('RENTER')}
                 className="text-primary focus:ring-primary"
               />
-              <span className="text-sm text-textPrimary">I’m looking for a place</span>
+              <span className="text-sm text-textPrimary">{t('register.roleRenter')}</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer rounded-lg border border-border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
@@ -229,13 +252,13 @@ const Register: React.FC = () => {
                 onChange={() => setRole('OWNER')}
                 className="text-primary focus:ring-primary"
               />
-              <span className="text-sm text-textPrimary">I’m listing my property</span>
+              <span className="text-sm text-textPrimary">{t('register.roleOwner')}</span>
             </label>
           </fieldset>
 
           <div>
             <label htmlFor="reg-password" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Password
+              {t('common.password')}
             </label>
             <div className="relative">
               <input
@@ -246,14 +269,14 @@ const Register: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field pr-11"
-                placeholder="At least 8 characters"
+                placeholder={t('register.passwordHint')}
                 minLength={8}
               />
               <button
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-textSecondary hover:text-textPrimary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
               </button>
@@ -264,7 +287,7 @@ const Register: React.FC = () => {
               htmlFor="reg-confirm"
               className="block text-sm font-medium text-textPrimary mb-1.5"
             >
-              Confirm password
+              {t('register.confirmPassword')}
             </label>
             <div className="relative">
               <input
@@ -275,14 +298,16 @@ const Register: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="input-field pr-11"
-                placeholder="Repeat password"
+                placeholder={t('register.repeatPassword')}
                 minLength={8}
               />
               <button
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-textSecondary hover:text-textPrimary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 onClick={() => setShowConfirmPassword((v) => !v)}
-                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                aria-label={
+                  showConfirmPassword ? t('common.hidePassword') : t('common.showPassword')
+                }
               >
                 {showConfirmPassword ? (
                   <EyeOff className="h-5 w-5" aria-hidden />
@@ -297,18 +322,18 @@ const Register: React.FC = () => {
             {submitting ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Creating account…
+                {t('register.submitting')}
               </>
             ) : (
-              'Sign up'
+              t('register.submit')
             )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-textSecondary">
-          Already have an account?{' '}
+          {t('register.hasAccount')}{' '}
           <Link to="/login" state={location.state} className="font-semibold text-primary hover:underline">
-            Sign in
+            {t('register.signIn')}
           </Link>
         </p>
       </div>
