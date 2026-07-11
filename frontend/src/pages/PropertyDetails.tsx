@@ -18,10 +18,13 @@ import {
   Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { resolveMediaUrl } from '../utils/mediaUrl';
+import { MediaImage } from '../components/MediaImage';
 import api from '../utils/api';
 import { addRecentlyViewed } from '../utils/recentlyViewed';
 import BackNavButton from '../components/BackNavButton';
 import { CONTACT_OWNER_AUTH_STATE } from '../utils/authRedirectState';
+import { getDemoHouseById, isDemoListingId } from '../data/getDemoHouse';
 
 function ownerIdString(owner: unknown): string {
   if (!owner) return '';
@@ -58,14 +61,26 @@ const PropertyDetails: React.FC = () => {
     isAuthenticated && user && ownerId && String(user.id) === ownerId;
   const isRenter = user?.role === 'RENTER';
   const isOwnerRole = user?.role === 'OWNER';
+  const isDemo = Boolean(house?.isDemo) || (id ? isDemoListingId(id) : false);
 
   const fetchProperty = useCallback(async () => {
     if (!id) return;
+    setLoading(true);
+    setCurrentImage(0);
+
+    if (isDemoListingId(id)) {
+      const demo = getDemoHouseById(id);
+      setHouse(demo);
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await api.get(`/houses/${id}`);
       setHouse(res.data.data);
     } catch (err) {
       console.error(err);
+      setHouse(null);
     } finally {
       setLoading(false);
     }
@@ -80,7 +95,7 @@ const PropertyDetails: React.FC = () => {
     addRecentlyViewed({
       id: String(house._id),
       title: house.title,
-      image: house.images?.[0]?.url,
+      image: resolveMediaUrl(house.images?.[0]?.url),
     });
   }, [house?._id, house?.title, house?.images]);
 
@@ -132,6 +147,10 @@ const PropertyDetails: React.FC = () => {
     }
     if (!isRenter) return;
     if (isOwnListing) return;
+    if (isDemo) {
+      toast('Demonstration listing — save works on real properties.', { icon: 'ℹ️' });
+      return;
+    }
 
     setFavoriteLoading(true);
     try {
@@ -170,6 +189,11 @@ const PropertyDetails: React.FC = () => {
       return;
     }
     if (isOwnListing) return;
+    if (isDemo) {
+      toast('Demonstration listing — messaging works on real properties.', { icon: 'ℹ️' });
+      navigate('/inquiries');
+      return;
+    }
     setInquiryError(null);
     setInquirySuccess(false);
     setInquiryMessage('');
@@ -226,26 +250,36 @@ const PropertyDetails: React.FC = () => {
   const heartClass = heartFilled ? 'text-secondary fill-secondary' : 'text-textPrimary';
 
   return (
-    <div className="pb-4 pt-4 px-0 max-w-6xl mx-auto animate-fade-in relative">
-      <div className="px-4 mb-4">
+    <div className="pb-24 md:pb-4 pt-2 sm:pt-4 px-0 max-w-6xl mx-auto animate-fade-in relative">
+      <div className="px-4 mb-3 sm:mb-4">
         <BackNavButton fallbackTo="/listings" />
       </div>
+
+      {isDemo && (
+        <div className="mx-4 md:mx-0 mb-4 rounded-xl border border-brandTeal/30 bg-brandTeal/10 px-4 py-3 text-sm text-brandNavy dark:text-slate-100">
+          <p className="font-semibold">Demonstration listing</p>
+          <p className="mt-0.5 text-textSecondary dark:text-slate-300 text-xs sm:text-sm">
+            Sample data for browsing. Real listings open the same full details page after owners publish.
+          </p>
+        </div>
+      )}
+
       {inquiryOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/50 p-0 md:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="inquiry-title"
         >
-          <div className="bg-white rounded-t-2xl md:rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 id="inquiry-title" className="text-lg font-bold text-textPrimary">
+          <div className="bg-white dark:bg-darksurface rounded-t-2xl md:rounded-2xl w-full max-w-lg shadow-xl max-h-[85dvh] overflow-y-auto border border-border dark:border-slate-600">
+            <div className="flex items-center justify-between border-b border-border dark:border-slate-600 px-4 py-3 sticky top-0 bg-white dark:bg-darksurface z-10">
+              <h2 id="inquiry-title" className="text-lg font-bold text-textPrimary dark:text-white">
                 Message the host
               </h2>
               <button
                 type="button"
                 onClick={() => setInquiryOpen(false)}
-                className="p-2 rounded-full hover:bg-surface text-textSecondary"
+                className="p-2 rounded-full hover:bg-surface dark:hover:bg-slate-700 text-textSecondary"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -254,7 +288,7 @@ const PropertyDetails: React.FC = () => {
             <div className="p-4 md:p-6">
               {inquirySuccess ? (
                 <div className="space-y-4 text-center">
-                  <p className="text-textPrimary">Your message was sent.</p>
+                  <p className="text-textPrimary dark:text-slate-100">Your message was sent.</p>
                   <Link to="/inquiries" className="btn-primary inline-block text-center">
                     View messages
                   </Link>
@@ -271,11 +305,11 @@ const PropertyDetails: React.FC = () => {
                 </div>
               ) : (
                 <form onSubmit={submitInquiry} className="space-y-4">
-                  <p className="text-sm text-textSecondary">
+                  <p className="text-sm text-textSecondary dark:text-slate-300">
                     Introduce yourself and ask about availability or details (10–500 characters).
                   </p>
                   {inquiryError && (
-                    <div className="rounded-lg bg-red-50 border border-error/30 text-error text-sm px-4 py-3">
+                    <div className="rounded-lg bg-red-50 dark:bg-red-950/40 border border-error/30 text-error text-sm px-4 py-3">
                       {inquiryError}
                     </div>
                   )}
@@ -316,24 +350,29 @@ const PropertyDetails: React.FC = () => {
 
       <div className="px-4 md:px-0 mb-4">
         <div className="mb-3">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1.5">{house.title}</h1>
-          <p className="text-textSecondary flex items-center gap-1 text-sm font-medium">
-            <MapPin className="h-4 w-4 shrink-0" /> {house.location.address}, {house.location.area},{' '}
-            {house.location.city}
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1.5 text-brandNavy dark:text-white">
+            {house.title}
+          </h1>
+          <p className="text-textSecondary dark:text-slate-300 flex items-center gap-1 text-sm font-medium">
+            <MapPin className="h-4 w-4 shrink-0" />
+            {[house.location.address, house.location.area, house.location.city]
+              .filter(Boolean)
+              .filter((v, i, arr) => arr.indexOf(v) === i)
+              .join(', ')}
           </p>
         </div>
         <div className="flex gap-3 items-center flex-wrap">
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center gap-1.5 text-sm font-medium hover:text-primary transition underline underline-offset-4"
+            className="flex items-center gap-1.5 text-sm font-medium text-brandNavy dark:text-slate-100 hover:text-primary transition underline underline-offset-4"
           >
             <Share2 className="h-4 w-4" /> {shareCopied ? 'Link copied' : 'Share'}
           </button>
           <button
             type="button"
             onClick={toggleFavorite}
-            disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions)}
+            disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions && !isDemo)}
             title={favoriteHint || undefined}
             className={`flex items-center gap-1.5 text-sm font-medium hover:text-secondary transition underline underline-offset-4 disabled:opacity-50 disabled:cursor-not-allowed ${heartClass}`}
           >
@@ -351,9 +390,9 @@ const PropertyDetails: React.FC = () => {
         <p className="px-4 md:px-0 text-sm text-textSecondary mb-2">{favoriteHint}</p>
       )}
 
-      <div className="relative w-full h-[260px] sm:h-[360px] md:h-[500px] md:rounded-2xl overflow-hidden bg-gray-100 group">
-        <img
-          src={house.images?.[currentImage]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'}
+      <div className="relative w-full h-[240px] sm:h-[360px] md:h-[480px] md:rounded-2xl overflow-hidden bg-gray-100 dark:bg-slate-800 isolate">
+        <MediaImage
+          src={house.images?.[currentImage]?.url}
           alt={house.title}
           className="w-full h-full object-cover"
         />
@@ -364,7 +403,7 @@ const PropertyDetails: React.FC = () => {
               onClick={() =>
                 setCurrentImage((prev) => (prev === 0 ? house.images.length - 1 : prev - 1))
               }
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/70 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/80 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md z-10"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -373,11 +412,11 @@ const PropertyDetails: React.FC = () => {
               onClick={() =>
                 setCurrentImage((prev) => (prev === house.images.length - 1 ? 0 : prev + 1))
               }
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/70 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md"
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 bg-white/80 hover:bg-white backdrop-blur rounded-full flex items-center justify-center shadow-md z-10"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 backdrop-blur-md px-3 py-1 rounded-full bg-black/20">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 backdrop-blur-md px-3 py-1 rounded-full bg-black/20 z-10">
               {house.images.map((_: any, i: number) => (
                 <div
                   key={i}
@@ -389,92 +428,74 @@ const PropertyDetails: React.FC = () => {
         )}
       </div>
 
-      {/* Mobile sticky booking bar */}
-      <div className="md:hidden sticky bottom-0 z-30 bg-white dark:bg-darksurface border-t border-border dark:border-slate-700 px-4 py-3 flex items-center gap-3 shadow-lg">
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-brandNavy dark:text-white text-base">
-            ETB {house.pricing.pricePerMonth.toLocaleString()}
-            <span className="text-xs font-normal text-textSecondary"> /mo</span>
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={toggleFavorite}
-          disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions)}
-          className={`p-2.5 rounded-full border border-border disabled:opacity-50 ${heartClass}`}
-          aria-label={isFavorite ? 'Remove from saved' : 'Save'}
-        >
-          {favoriteLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={`h-5 w-5 ${heartFilled ? 'fill-current' : ''}`} />}
-        </button>
-        <button
-          type="button"
-          onClick={openContact}
-          disabled={!!(isAuthenticated && !canUseRenterActions)}
-          className="btn-primary !w-auto px-5 !h-11 text-sm"
-        >
-          <MessageSquare className="h-4 w-4 mr-1.5" /> Contact
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 px-4 md:px-0 pb-4 md:pb-12">
-        <div className="md:col-span-2 space-y-6">
-          <div className="flex justify-between items-center border-b border-border pb-6">
-            <div>
-              <h2 className="text-xl font-bold mb-2">Hosted by {house.owner?.fullName || 'Host'}</h2>
-              <p className="text-textSecondary flex items-center gap-4 text-sm">
+        <div className="md:col-span-2 space-y-6 min-w-0">
+          <div className="flex justify-between items-center border-b border-border dark:border-slate-600 pb-6 gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl font-bold mb-2 text-brandNavy dark:text-white truncate">
+                Hosted by {house.owner?.fullName || 'Host'}
+              </h2>
+              <p className="text-textSecondary dark:text-slate-300 flex items-center gap-4 text-sm">
                 <span>Property Owner</span>
               </p>
             </div>
-            <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-sm">
+            <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl uppercase shadow-sm shrink-0">
               {house.owner?.fullName?.charAt(0) || 'H'}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 py-4">
-            <div className="p-4 border border-border rounded-xl flex items-center gap-3">
-              <Home className="h-6 w-6 text-primary" />
-              <div className="text-sm">
-                <p className="font-semibold text-textPrimary">{house.propertyType}</p>
+          <div className="grid grid-cols-2 gap-3 py-2">
+            <div className="p-4 border border-border dark:border-slate-600 rounded-xl flex items-center gap-3">
+              <Home className="h-6 w-6 text-primary shrink-0" />
+              <div className="text-sm min-w-0">
+                <p className="font-semibold text-textPrimary dark:text-slate-100 truncate">
+                  {house.propertyType}
+                </p>
                 <p className="text-textSecondary">Type</p>
               </div>
             </div>
-            <div className="p-4 border border-border rounded-xl flex items-center gap-3">
-              <Bed className="h-6 w-6 text-primary" />
+            <div className="p-4 border border-border dark:border-slate-600 rounded-xl flex items-center gap-3">
+              <Bed className="h-6 w-6 text-primary shrink-0" />
               <div className="text-sm">
-                <p className="font-semibold text-textPrimary">{house.bedrooms}</p>
+                <p className="font-semibold text-textPrimary dark:text-slate-100">{house.bedrooms}</p>
                 <p className="text-textSecondary">Bedrooms</p>
               </div>
             </div>
-            <div className="p-4 border border-border rounded-xl flex items-center gap-3">
-              <Bath className="h-6 w-6 text-primary" />
+            <div className="p-4 border border-border dark:border-slate-600 rounded-xl flex items-center gap-3">
+              <Bath className="h-6 w-6 text-primary shrink-0" />
               <div className="text-sm">
-                <p className="font-semibold text-textPrimary">{house.bathrooms}</p>
+                <p className="font-semibold text-textPrimary dark:text-slate-100">{house.bathrooms}</p>
                 <p className="text-textSecondary">Bathrooms</p>
               </div>
             </div>
             {house.squareFootage && (
-              <div className="p-4 border border-border rounded-xl flex items-center gap-3">
-                <Layout className="h-6 w-6 text-primary" />
+              <div className="p-4 border border-border dark:border-slate-600 rounded-xl flex items-center gap-3">
+                <Layout className="h-6 w-6 text-primary shrink-0" />
                 <div className="text-sm">
-                  <p className="font-semibold text-textPrimary">{house.squareFootage}</p>
-                  <p className="text-textSecondary">Sq Ft</p>
+                  <p className="font-semibold text-textPrimary dark:text-slate-100">{house.squareFootage}</p>
+                  <p className="text-textSecondary">m²</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="border-t border-border pt-6">
-            <h3 className="text-lg font-bold mb-4">About this property</h3>
-            <p className="text-textSecondary text-base leading-relaxed">{house.description}</p>
+          <div className="border-t border-border dark:border-slate-600 pt-6">
+            <h3 className="text-lg font-bold mb-4 text-brandNavy dark:text-white">About this property</h3>
+            <p className="text-textSecondary dark:text-slate-300 text-base leading-relaxed">
+              {house.description}
+            </p>
           </div>
 
-          <div className="border-t border-border pt-6 pb-6">
-            <h3 className="text-lg font-bold mb-4">What this place offers</h3>
-            <div className="grid grid-cols-2 gap-y-4">
+          <div className="border-t border-border dark:border-slate-600 pt-6 pb-6">
+            <h3 className="text-lg font-bold mb-4 text-brandNavy dark:text-white">What this place offers</h3>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-3">
               {house.amenities?.map((amenity: string, i: number) => (
-                <div key={i} className="flex items-center gap-3 text-textPrimary font-medium">
-                  <div className="h-2 w-2 rounded-full bg-primary/50" />
-                  {amenity}
+                <div
+                  key={i}
+                  className="flex items-center gap-3 text-textPrimary dark:text-slate-100 font-medium text-sm min-w-0"
+                >
+                  <div className="h-2 w-2 rounded-full bg-primary/50 shrink-0" />
+                  <span className="truncate">{amenity}</span>
                 </div>
               ))}
               {(!house.amenities || house.amenities.length === 0) && (
@@ -486,7 +507,7 @@ const PropertyDetails: React.FC = () => {
 
         <div className="hidden md:block md:col-span-1">
           <div className="sticky top-28 bg-white dark:bg-darksurface border border-border dark:border-slate-600 rounded-2xl p-6 shadow-[0_4px_16px_rgba(0,0,0,0.06)] flex flex-col gap-4">
-            <div className="flex items-end gap-2 text-2xl font-bold">
+            <div className="flex items-end gap-2 text-2xl font-bold text-brandNavy dark:text-white">
               ETB {house.pricing.pricePerMonth.toLocaleString()}{' '}
               <span className="text-base text-textSecondary font-normal pb-1">/ month</span>
             </div>
@@ -504,7 +525,7 @@ const PropertyDetails: React.FC = () => {
               <button
                 type="button"
                 onClick={openContact}
-                disabled={!!(isAuthenticated && !canUseRenterActions)}
+                disabled={!!(isAuthenticated && !canUseRenterActions && !isDemo)}
                 title={contactHint || undefined}
                 className="btn-primary w-full h-12 text-lg shadow-md hover:-translate-y-0.5 transform disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -513,7 +534,7 @@ const PropertyDetails: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleFavorite}
-                disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions)}
+                disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions && !isDemo)}
                 title={favoriteHint || undefined}
                 className="w-full h-12 font-medium border border-primary text-primary rounded-lg hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -525,6 +546,37 @@ const PropertyDetails: React.FC = () => {
             <div className="text-center text-sm text-textSecondary mt-2">You won&apos;t be charged yet</div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile action bar — fixed so it never sits between gallery and content */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-darksurface border-t border-border dark:border-slate-700 px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] safe-pb">
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-brandNavy dark:text-white text-base truncate">
+            ETB {house.pricing.pricePerMonth.toLocaleString()}
+            <span className="text-xs font-normal text-textSecondary"> /mo</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={toggleFavorite}
+          disabled={favoriteLoading || (!!isAuthenticated && !canUseRenterActions && !isDemo)}
+          className={`p-2.5 rounded-full border border-border dark:border-slate-600 disabled:opacity-50 shrink-0 ${heartClass}`}
+          aria-label={isFavorite ? 'Remove from saved' : 'Save'}
+        >
+          {favoriteLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Heart className={`h-5 w-5 ${heartFilled ? 'fill-current' : ''}`} />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={openContact}
+          disabled={!!(isAuthenticated && !canUseRenterActions && !isDemo)}
+          className="btn-primary !w-auto px-4 !h-11 text-sm shrink-0"
+        >
+          <MessageSquare className="h-4 w-4 mr-1.5" /> Contact
+        </button>
       </div>
     </div>
   );
