@@ -7,6 +7,11 @@ function participantIds(inquiry) {
   return { renterId, ownerId };
 }
 
+function emitMessageNotification(io, recipientUserId, payload) {
+  if (!io || !recipientUserId) return;
+  io.to(`user:${recipientUserId}`).emit('message:notification', payload);
+}
+
 // @desc    Send an inquiry
 // @route   POST /api/inquiries
 // @access  Private (Renter)
@@ -28,6 +33,19 @@ exports.createInquiry = async (req, res) => {
     }
 
     const inquiry = await Inquiry.create(req.body);
+
+    const realtime = req.app.get('io');
+    const ownerId = house.owner?.toString?.() ?? String(house.owner);
+    const preview =
+      typeof req.body.message === 'string' ? req.body.message.trim().slice(0, 120) : 'New inquiry';
+    emitMessageNotification(realtime, ownerId, {
+      inquiryId: inquiry._id.toString(),
+      type: 'new_inquiry',
+      preview,
+      fromName: req.user.fullName || 'A renter',
+      propertyTitle: house.title || 'your listing',
+    });
+
     res.status(201).json({ success: true, data: inquiry });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -50,32 +68,36 @@ exports.getMyInquiries = async (req, res) => {
   }
 };
 
-// @desc    Get single inquiry (owner, renter, or admin)
+// @desc    Get single inquiry thread (renter or owner)
 // @route   GET /api/inquiries/:id
 // @access  Private
 exports.getInquiryById = async (req, res) => {
   try {
     const inquiry = await Inquiry.findById(req.params.id)
       .populate('property', 'title images pricing location status')
-      .populate('renter', 'fullName phone email')
-      .populate('owner', 'fullName phone email')
-      .populate({
-        path: 'replies.sender',
-        select: 'fullName email role',
-      });
+      .populate('owner', 'fullName phone email avatar')
+      .populate('renter', 'fullName phone email avatar')
+      .populate('replies.sender', 'fullName');
 
     if (!inquiry) {
       return res.status(404).json({ success: false, message: 'Inquiry not found' });
     }
 
     const uid = req.user.id.toString();
-    const ownerId = inquiry.owner?._id ? inquiry.owner._id.toString() : inquiry.owner.toString();
-    const renterId = inquiry.renter?._id ? inquiry.renter._id.toString() : inquiry.renter.toString();
-    const isOwner = ownerId === uid;
-    const isRenter = renterId === uid;
-    if (!isOwner && !isRenter && req.user.role !== 'ADMIN') {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
+    const { renterId, ownerId } = participantIds(inquiry);
+    if (uid !== renterId && uid !== ownerId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
+
+    if (uid === ownerId) {
+      if (inquiry.status === 'Pending') {
+        inquiry.status = 'Read';
+      }
+      inquiry.ownerLastReadAt = new Date();
+    } else if (uid === renterId) {
+      inquiry.renterLastReadAt = new Date();
+    }
+    await inquiry.save();
 
     res.status(200).json({ success: true, data: inquiry });
   } catch (error) {
@@ -104,43 +126,6 @@ exports.getReceivedInquiries = async (req, res) => {
   }
 };
 
-// @desc    Get single inquiry thread (renter or owner)
-// @route   GET /api/inquiries/:id
-// @access  Private
-exports.getInquiryById = async (req, res) => {
-  try {
-    const inquiry = await Inquiry.findById(req.params.id)
-      .populate('property', 'title images pricing location status')
-      .populate('owner', 'fullName phone email avatar')
-      .populate('renter', 'fullName phone email avatar')
-      .populate('replies.sender', 'fullName');
-
-    if (!inquiry) {
-      return res.status(404).json({ success: false, message: 'Inquiry not found' });
-    }
-
-    const uid = req.user._id.toString();
-    const { renterId, ownerId } = participantIds(inquiry);
-    if (uid !== renterId && uid !== ownerId) {
-      return res.status(403).json({ success: false, message: 'Not authorized' });
-    }
-
-    if (uid === ownerId) {
-      if (inquiry.status === 'Pending') {
-        inquiry.status = 'Read';
-      }
-      inquiry.ownerLastReadAt = new Date();
-    } else {
-      inquiry.renterLastReadAt = new Date();
-    }
-    await inquiry.save();
-
-    res.status(200).json({ success: true, data: inquiry });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 // @desc    Update status (Read, Responded)
 // @route   PATCH /api/inquiries/:id
 // @access  Private (Owner)
@@ -149,7 +134,7 @@ exports.updateInquiryStatus = async (req, res) => {
     const inquiry = await Inquiry.findById(req.params.id);
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
-    if (inquiry.owner.toString() !== req.user._id.toString()) {
+    if (inquiry.owner.toString() !== req.user.id.toString()) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
@@ -171,7 +156,7 @@ exports.replyToInquiry = async (req, res) => {
     if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
 
     const { renterId, ownerId } = participantIds(inquiry);
-    const uid = req.user._id.toString();
+    const uid = req.user.id.toString();
     if (uid !== ownerId && uid !== renterId) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
@@ -185,7 +170,7 @@ exports.replyToInquiry = async (req, res) => {
     }
 
     const replyArgs = {
-      sender: req.user._id,
+      sender: req.user.id,
       message
     };
 
@@ -207,8 +192,29 @@ exports.replyToInquiry = async (req, res) => {
 
     const realtime = req.app.get('io');
     if (realtime) {
-      realtime.to(`inquiry:${inquiry._id.toString()}`).emit('inquiry:updated', {
-        inquiryId: inquiry._id.toString(),
+      const idStr = inquiry._id.toString();
+      realtime.to(`inquiry:${idStr}`).emit('inquiry:updated', {
+        inquiryId: idStr,
+      });
+
+      const recipientId = uid === ownerId ? renterId : ownerId;
+      const fromName =
+        populated?.replies?.length
+          ? populated.replies[populated.replies.length - 1]?.sender?.fullName ||
+            req.user.fullName ||
+            'Someone'
+          : req.user.fullName || 'Someone';
+      const propertyTitle =
+        typeof populated?.property === 'object' && populated.property?.title
+          ? populated.property.title
+          : 'a listing';
+
+      emitMessageNotification(realtime, recipientId, {
+        inquiryId: idStr,
+        type: 'reply',
+        preview: message.slice(0, 120),
+        fromName,
+        propertyTitle,
       });
     }
 
