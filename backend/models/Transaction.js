@@ -21,7 +21,8 @@ const transactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Completed', 'Failed'],
+    // Pending = awaiting payment; AwaitingApproval = paid, needs admin; Completed = premium granted
+    enum: ['Pending', 'AwaitingApproval', 'Completed', 'Failed', 'Rejected'],
     default: 'Pending'
   },
   paymentMethod: {
@@ -39,6 +40,17 @@ const transactionSchema = new mongoose.Schema({
   },
   mpesaResultDesc: {
     type: String,
+  },
+  reviewedBy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+  },
+  reviewedAt: {
+    type: Date,
+  },
+  reviewNote: {
+    type: String,
+    maxlength: 500,
   },
 }, { timestamps: true });
 
