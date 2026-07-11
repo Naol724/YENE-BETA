@@ -768,7 +768,13 @@ const PropertyPostForm: React.FC<PropertyPostFormProps> = ({
 
               {/* Upload Area */}
               <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 md:p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
+                className={`border-2 border-dashed rounded-lg p-4 sm:p-6 md:p-8 text-center transition-colors cursor-pointer ${
+                  dragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >

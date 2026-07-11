@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { 
   Send, 
-  ArrowLeft, 
   User, 
-  Home, 
-  Check, 
   CheckCheck,
-  Clock,
   Phone,
   MoreVertical
 } from 'lucide-react';
@@ -50,15 +46,13 @@ interface Inquiry {
 const ChatInterface: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -75,7 +69,7 @@ const ChatInterface: React.FC = () => {
     if (!id || !isAuthenticated || !user) return;
 
     const newSocket = io(getSocketOrigin(), {
-      auth: { token: api.defaults.headers.Authorization?.replace('Bearer ', '') }
+      auth: { token: token || '' }
     });
 
     newSocket.on('connect', () => {
@@ -93,13 +87,11 @@ const ChatInterface: React.FC = () => {
       }
     });
 
-    setSocket(newSocket);
-
     return () => {
       newSocket.emit('leave-inquiry', id);
       newSocket.disconnect();
     };
-  }, [id, isAuthenticated, user]);
+  }, [id, isAuthenticated, user, token]);
 
   const fetchInquiry = async () => {
     if (!id) return;

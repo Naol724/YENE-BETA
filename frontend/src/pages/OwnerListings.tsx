@@ -1,5 +1,5 @@
 import React from 'react';
-import PropertyManagement from '../components/Owner/PropertyManagement';
+import PropertyManagement from '../components/owner/PropertyManagement';
 
 const OwnerListings: React.FC = () => {
   return <PropertyManagement />;

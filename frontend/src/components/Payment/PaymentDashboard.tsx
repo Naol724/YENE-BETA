@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  CreditCard,
   TrendingUp,
-  Calendar,
   CheckCircle,
   XCircle,
   Clock,
   Download,
-  Filter,
   Search,
   DollarSign,
   Receipt,

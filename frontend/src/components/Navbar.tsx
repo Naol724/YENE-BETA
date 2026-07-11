@@ -298,9 +298,9 @@ const Navbar: React.FC = () => {
                     className="py-3 px-2 sm:py-3 sm:px-3 rounded-lg font-medium text-brandNavy dark:text-slate-100 hover:bg-surface dark:hover:bg-slate-700 text-sm sm:text-base flex items-center justify-between gap-2"
                   >
                     <span>{item.label}</span>
-                    {item.badge > 0 && (
+                    {(item.badge ?? 0) > 0 && (
                       <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-error text-white text-[11px] font-bold flex items-center justify-center">
-                        {item.badge > 9 ? '9+' : item.badge}
+                        {(item.badge ?? 0) > 9 ? '9+' : item.badge}
                       </span>
                     )}
                   </Link>

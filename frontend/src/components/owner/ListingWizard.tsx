@@ -274,6 +274,9 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
           type: blob.type || 'image/jpeg',
         });
       }));
+    if (!file) {
+      throw new Error('Image file missing');
+    }
     const uploadBody = new FormData();
     uploadBody.append('image', file, file.name);
     const response = await api.post('/upload/property-image', uploadBody);

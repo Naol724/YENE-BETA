@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import {
   Home,
   Edit,
@@ -8,23 +7,14 @@ import {
   Eye,
   Plus,
   Search,
-  Filter,
-  MoreVertical,
   CheckCircle,
-  XCircle,
   Clock,
-  TrendingUp,
-  Calendar,
   Phone,
-  Mail,
   MapPin,
-  DollarSign,
-  Camera,
   Loader2,
   AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { RootState } from '../../store';
 import api from '../../utils/api';
 import { MediaImage } from '../MediaImage';
 
@@ -72,7 +62,6 @@ interface Property {
 
 const PropertyManagement: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useSelector((state: RootState) => state.auth);
   
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +70,6 @@ const PropertyManagement: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -135,23 +123,6 @@ const PropertyManagement: React.FC = () => {
     } catch (error) {
       console.error('Failed to delete property:', error);
       toast.error('Failed to delete property');
-    }
-  };
-
-  const handleStatusUpdate = async (propertyId: string, newStatus: string) => {
-    try {
-      const response = await api.patch(`/houses/${propertyId}`, { status: newStatus });
-      if (response.data.success) {
-        setProperties(prev => prev.map(p => 
-          p._id === propertyId 
-            ? { ...p, status: newStatus }
-            : p
-        ));
-        toast.success(`Property status updated to ${newStatus}`);
-      }
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update property status');
     }
   };
 

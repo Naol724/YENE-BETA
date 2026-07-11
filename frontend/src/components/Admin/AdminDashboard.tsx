@@ -8,11 +8,9 @@ import {
   MessageSquare,
   CreditCard,
   Settings,
-  LogOut,
   TrendingUp,
   DollarSign,
   Eye,
-  Edit,
   Trash2,
   Search,
   CheckCircle,
@@ -482,14 +480,14 @@ const AdminDashboard: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             {user.isEmailVerified ? (
-                              <CheckCircle className="w-4 h-4 text-emerald-500" title="Email Verified" />
+                              <span title="Email Verified"><CheckCircle className="w-4 h-4 text-emerald-500" /></span>
                             ) : (
-                              <XCircle className="w-4 h-4 text-rose-500" title="Email Not Verified" />
+                              <span title="Email Not Verified"><XCircle className="w-4 h-4 text-rose-500" /></span>
                             )}
                             {user.isApproved ? (
-                              <UserCheck className="w-4 h-4 text-emerald-500" title="Owner Approved" />
+                              <span title="Owner Approved"><UserCheck className="w-4 h-4 text-emerald-500" /></span>
                             ) : (
-                              <UserX className="w-4 h-4 text-amber-500" title="Owner Pending Approval" />
+                              <span title="Owner Pending Approval"><UserX className="w-4 h-4 text-amber-500" /></span>
                             )}
                             {user.isPremium && (
                               <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-full uppercase tracking-wider">Premium</span>
