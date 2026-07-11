@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import api from '../utils/api';
 import { formatTimeAgo } from '../utils/timeAgo';
+import { MediaImage } from '../components/MediaImage';
 
 interface PremiumData {
   isPremium: boolean;
@@ -142,14 +143,14 @@ const OwnerDashboard: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in text-textPrimary dark:text-slate-100">
       {loadError && (
         <div
           role="alert"
-          className="mb-6 rounded-xl border border-error/40 bg-error/5 px-4 py-3 text-sm text-textPrimary flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          className="mb-6 rounded-xl border border-error/40 bg-error/5 dark:bg-error/10 px-4 py-3 text-sm text-textPrimary dark:text-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         >
           <span>{loadError}</span>
-          <button type="button" onClick={() => load()} className="btn-primary !h-10 !px-4 shrink-0">
+          <button type="button" onClick={() => load()} className="btn-primary !h-10 !px-4 shrink-0 w-full sm:w-auto">
             Retry
           </button>
         </div>
@@ -157,7 +158,7 @@ const OwnerDashboard: React.FC = () => {
 
       <header className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-[28px] font-bold text-textPrimary leading-tight">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-textPrimary dark:text-white leading-tight">
             Welcome back, {firstName}{' '}
             <span aria-hidden className="inline-block">
               👋
@@ -166,7 +167,9 @@ const OwnerDashboard: React.FC = () => {
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                user?.isApproved ? 'bg-success/15 text-success' : 'bg-warning/25 text-textPrimary'
+                user?.isApproved
+                  ? 'bg-success/15 text-success'
+                  : 'bg-warning/25 text-textPrimary dark:text-amber-100'
               }`}
             >
               {user?.isApproved ? 'Approved' : 'Pending Approval'}
@@ -174,15 +177,15 @@ const OwnerDashboard: React.FC = () => {
             <span
               className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
                 premiumStatus?.isPremium
-                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                  : 'bg-surface text-textSecondary border border-border'
+                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-700'
+                  : 'bg-surface dark:bg-slate-800 text-textSecondary dark:text-slate-300 border border-border dark:border-slate-600'
               }`}
             >
               {premiumStatus?.isPremium && <Star className="h-3 w-3 fill-amber-500 text-amber-600" aria-hidden />}
               {premiumStatus?.isPremium ? 'Premium' : 'Free Plan'}
             </span>
             {premiumStatus?.isPremium && premiumStatus.premiumExpiresAt && (
-              <span className="text-xs text-textSecondary w-full sm:w-auto">
+              <span className="text-xs text-textSecondary dark:text-slate-400 w-full sm:w-auto">
                 Renews {new Date(premiumStatus.premiumExpiresAt).toLocaleDateString()}
               </span>
             )}
@@ -191,7 +194,7 @@ const OwnerDashboard: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Link
             to="/owner/profile"
-            className="h-12 w-12 rounded-full border-2 border-border overflow-hidden shrink-0 bg-surface flex items-center justify-center text-textSecondary font-semibold self-end sm:self-auto"
+            className="h-12 w-12 rounded-full border-2 border-border dark:border-slate-600 overflow-hidden shrink-0 bg-surface dark:bg-slate-800 flex items-center justify-center text-textSecondary dark:text-slate-200 font-semibold self-end sm:self-auto"
             aria-label="Open profile"
           >
             {firstName[0]?.toUpperCase()}
@@ -201,14 +204,14 @@ const OwnerDashboard: React.FC = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
         <div className="card-container">
-          <div className="flex items-center text-textSecondary text-sm mb-1">
-            <Home className="h-4 w-4 mr-2 text-primary" aria-hidden />
+          <div className="flex items-center text-textSecondary dark:text-slate-400 text-sm mb-1">
+            <Home className="h-4 w-4 mr-2 text-primary dark:text-brandTeal" aria-hidden />
             Total Listings
           </div>
-          <p className="text-[32px] font-bold text-textPrimary leading-none">
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white leading-none">
             {loading ? '—' : stats.totalListings}
           </p>
-          <p className="text-sm text-textSecondary mt-1">Active listings</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400 mt-1">Active listings</p>
         </div>
         <div className="card-container relative">
           {newInquiryCount > 0 && (
@@ -219,50 +222,50 @@ const OwnerDashboard: React.FC = () => {
               {newInquiryCount}
             </span>
           )}
-          <div className="flex items-center text-textSecondary text-sm mb-1">
-            <MessageSquare className="h-4 w-4 mr-2 text-primary" aria-hidden />
+          <div className="flex items-center text-textSecondary dark:text-slate-400 text-sm mb-1">
+            <MessageSquare className="h-4 w-4 mr-2 text-primary dark:text-brandTeal" aria-hidden />
             Total Inquiries
           </div>
-          <p className="text-[32px] font-bold text-textPrimary leading-none">
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white leading-none">
             {loading ? '—' : stats.totalInquiries}
           </p>
-          <p className="text-sm text-textSecondary mt-1">Messages received</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400 mt-1">Messages received</p>
         </div>
         <div className="card-container">
-          <div className="flex items-center text-textSecondary text-sm mb-1">
-            <Eye className="h-4 w-4 mr-2 text-primary" aria-hidden />
+          <div className="flex items-center text-textSecondary dark:text-slate-400 text-sm mb-1">
+            <Eye className="h-4 w-4 mr-2 text-primary dark:text-brandTeal" aria-hidden />
             Total views
           </div>
-          <p className="text-[32px] font-bold text-textPrimary leading-none">
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white leading-none">
             {loading ? '—' : stats.viewsThisWeek}
           </p>
-          <p className="text-sm text-textSecondary mt-1 flex items-center gap-1">
+          <p className="text-sm text-textSecondary dark:text-slate-400 mt-1 flex items-center gap-1">
             Across all listings
             <TrendingUp className="h-3 w-3 text-success shrink-0" aria-hidden />
           </p>
         </div>
         <div className="card-container">
-          <div className="flex items-center text-textSecondary text-sm mb-1">
-            <MessageCircle className="h-4 w-4 mr-2 text-primary" aria-hidden />
+          <div className="flex items-center text-textSecondary dark:text-slate-400 text-sm mb-1">
+            <MessageCircle className="h-4 w-4 mr-2 text-primary dark:text-brandTeal" aria-hidden />
             Response rate
           </div>
-          <p className="text-[32px] font-bold text-textPrimary leading-none">
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white leading-none">
             {loading ? '—' : `${stats.responseRate}%`}
           </p>
-          <div className="mt-2 h-2 rounded-full bg-border overflow-hidden">
+          <div className="mt-2 h-2 rounded-full bg-border dark:bg-slate-700 overflow-hidden">
             <div
-              className="h-full bg-primary rounded-full transition-all"
+              className="h-full bg-primary dark:bg-brandTeal rounded-full transition-all"
               style={{ width: `${stats.responseRate}%` }}
             />
           </div>
-          <p className="text-sm text-textSecondary mt-1">Across all inquiries</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400 mt-1">Across all inquiries</p>
         </div>
       </div>
 
       {premiumStatus && !premiumStatus.isPremium && premiumStatus.freeListingsRemaining !== null && premiumStatus.freeListingsRemaining !== undefined && (
-        <div className="mb-6 rounded-xl border border-border bg-surface px-4 py-3 text-sm">
-          <span className="font-semibold text-textPrimary">Free listings remaining: </span>
-          <span className="text-primary font-bold">{premiumStatus.freeListingsRemaining}</span>
+        <div className="mb-6 rounded-xl border border-border dark:border-slate-700 bg-surface dark:bg-darksurface px-4 py-3 text-sm">
+          <span className="font-semibold text-textPrimary dark:text-white">Free listings remaining: </span>
+          <span className="text-primary dark:text-brandTeal font-bold">{premiumStatus.freeListingsRemaining}</span>
           {!premiumStatus.canAddListing && (
             <span className="block mt-2 text-warning text-xs font-medium">
               Limit reached — upgrade to add more properties.
@@ -271,11 +274,11 @@ const OwnerDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col gap-3 mb-10">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-10 sm:items-start">
         {premiumStatus && !premiumStatus.canAddListing ? (
           <Link
             to="/owner/premium"
-            className="btn-primary w-full md:w-auto md:inline-flex text-center animate-bounce-subtle"
+            className="btn-primary text-center animate-bounce-subtle"
             aria-label="Upgrade to add more listings"
           >
             Upgrade to add another listing
@@ -283,7 +286,7 @@ const OwnerDashboard: React.FC = () => {
         ) : (
           <Link
             to="/owner/listings/new"
-            className="btn-primary w-full md:w-auto md:inline-flex animate-bounce-subtle"
+            className="btn-primary animate-bounce-subtle"
             aria-label="Add new listing"
           >
             <Plus className="h-5 w-5 mr-2" aria-hidden />
@@ -293,7 +296,7 @@ const OwnerDashboard: React.FC = () => {
         {!premiumStatus?.isPremium && (
           <Link
             to="/owner/premium"
-            className="w-full md:w-auto md:inline-flex items-center justify-center h-12 px-6 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary/5 transition-colors"
+            className="inline-flex items-center justify-center h-11 sm:h-12 px-5 sm:px-6 rounded-lg border-2 border-primary dark:border-brandTeal text-primary dark:text-brandTeal font-semibold hover:bg-primary/5 dark:hover:bg-brandTeal/10 transition-colors"
           >
             Upgrade to Premium
           </Link>
@@ -301,29 +304,33 @@ const OwnerDashboard: React.FC = () => {
       </div>
 
       <section className="mb-10">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[20px] font-semibold text-textPrimary">Recent Listings</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg sm:text-[20px] font-semibold text-textPrimary dark:text-white">Recent Listings</h2>
           <Link
             to="/owner/listings"
-            className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline"
+            className="text-sm font-semibold text-primary dark:text-brandTeal flex items-center gap-1 hover:underline shrink-0"
           >
             View All <ChevronRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
 
         {listings.length === 0 && !loading ? (
-          <div className="rounded-xl border border-dashed border-border bg-surface p-8 text-center">
-            <Home className="h-12 w-12 mx-auto text-textSecondary mb-3" aria-hidden />
-            <p className="text-textPrimary font-medium mb-1">You haven&apos;t listed any properties yet</p>
-            <p className="text-textSecondary text-sm mb-4">Your first listing is free — get started in minutes.</p>
+          <div className="rounded-xl border border-dashed border-border dark:border-slate-600 bg-surface dark:bg-darksurface p-6 sm:p-8 text-center">
+            <Home className="h-12 w-12 mx-auto text-textSecondary dark:text-slate-400 mb-3" aria-hidden />
+            <p className="text-textPrimary dark:text-white font-medium mb-1">You haven&apos;t listed any properties yet</p>
+            <p className="text-textSecondary dark:text-slate-400 text-sm mb-4">Your first listing is free — get started in minutes.</p>
             {premiumStatus && !premiumStatus.canAddListing ? (
-              <Link to="/owner/premium" className="btn-primary inline-flex">
-                Upgrade to list
-              </Link>
+              <div className="flex justify-center">
+                <Link to="/owner/premium" className="btn-primary">
+                  Upgrade to list
+                </Link>
+              </div>
             ) : (
-              <Link to="/owner/listings/new" className="btn-primary inline-flex">
-                Add Listing
-              </Link>
+              <div className="flex justify-center">
+                <Link to="/owner/listings/new" className="btn-primary">
+                  Add Listing
+                </Link>
+              </div>
             )}
           </div>
         ) : (
@@ -331,25 +338,27 @@ const OwnerDashboard: React.FC = () => {
             {listings.slice(0, 3).map((house) => (
               <div
                 key={house._id}
-                className="min-w-[260px] md:min-w-0 flex gap-3 p-3 rounded-xl border border-border bg-white shadow-sm hover:shadow-md transition-shadow"
+                className="min-w-[240px] sm:min-w-[260px] md:min-w-0 flex gap-3 p-3 rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="w-20 h-20 rounded-lg overflow-hidden bg-surface shrink-0">
-                  <img
-                    src={house.images?.find((i) => i.isMain)?.url || house.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200'}
+                <div className="w-20 h-20 rounded-lg overflow-hidden bg-surface dark:bg-slate-800 shrink-0">
+                  <MediaImage
+                    src={
+                      house.images?.find((i) => i.isMain)?.url || house.images?.[0]?.url
+                    }
                     alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-textPrimary truncate">{house.title}</p>
-                  <p className="text-sm font-bold text-primary mt-0.5">
-                    KES {house.pricing?.pricePerMonth?.toLocaleString() ?? '—'}/mo
+                  <p className="font-semibold text-textPrimary dark:text-slate-100 truncate">{house.title}</p>
+                  <p className="text-sm font-bold text-primary dark:text-brandTeal mt-0.5">
+                    ETB {house.pricing?.pricePerMonth?.toLocaleString() ?? '—'}/mo
                   </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-textSecondary">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-textSecondary dark:text-slate-400">
                     <button
                       type="button"
                       onClick={(e) => toggleStatus(house, e)}
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium text-primary dark:text-brandTeal hover:underline"
                       aria-label={house.status === 'Active' ? 'Pause listing' : 'Activate listing'}
                     >
                       {house.status === 'Active' ? 'Active' : 'Paused'}
@@ -357,7 +366,7 @@ const OwnerDashboard: React.FC = () => {
                     <span className="flex items-center gap-0.5">
                       <Eye className="h-3 w-3" /> {house.views ?? 0}
                     </span>
-                    <Link to={`/owner/listings/${house._id}/edit`} className="p-1 rounded hover:bg-surface" aria-label="Edit listing">
+                    <Link to={`/owner/listings/${house._id}/edit`} className="p-1 rounded hover:bg-surface dark:hover:bg-slate-800" aria-label="Edit listing">
                       <Edit2 className="h-4 w-4" />
                     </Link>
                     <button
@@ -377,21 +386,21 @@ const OwnerDashboard: React.FC = () => {
       </section>
 
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[20px] font-semibold text-textPrimary">Recent Inquiries</h2>
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg sm:text-[20px] font-semibold text-textPrimary dark:text-white">Recent Inquiries</h2>
           <Link
             to="/owner/inquiries"
-            className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline"
+            className="text-sm font-semibold text-primary dark:text-brandTeal flex items-center gap-1 hover:underline shrink-0"
           >
             View All <ChevronRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
 
         {inquiries.length === 0 && !loading ? (
-          <div className="rounded-xl border border-border bg-white p-8 text-center">
-            <MessageSquare className="h-12 w-12 mx-auto text-textSecondary mb-3" aria-hidden />
-            <p className="text-textPrimary font-medium">No inquiries yet</p>
-            <p className="text-textSecondary text-sm mt-1">When renters contact you, they&apos;ll appear here.</p>
+          <div className="rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface p-6 sm:p-8 text-center">
+            <MessageSquare className="h-12 w-12 mx-auto text-textSecondary dark:text-slate-400 mb-3" aria-hidden />
+            <p className="text-textPrimary dark:text-white font-medium">No inquiries yet</p>
+            <p className="text-textSecondary dark:text-slate-400 text-sm mt-1">When renters contact you, they&apos;ll appear here.</p>
           </div>
         ) : (
           <ul className="space-y-2">
@@ -399,23 +408,23 @@ const OwnerDashboard: React.FC = () => {
               <li key={inq._id}>
                 <Link
                   to={`/owner/inquiries/${inq._id}`}
-                  className="flex gap-3 p-4 rounded-xl border border-border bg-white hover:border-primary/40 hover:shadow-sm transition-all"
+                  className="flex gap-3 p-3 sm:p-4 rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface hover:border-primary/40 dark:hover:border-brandTeal/40 hover:shadow-sm transition-all"
                 >
-                  <div className="h-11 w-11 rounded-full bg-surface border border-border flex items-center justify-center font-semibold text-textSecondary shrink-0">
+                  <div className="h-11 w-11 rounded-full bg-surface dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center font-semibold text-textSecondary dark:text-slate-300 shrink-0">
                     {(inq.renter?.fullName ?? '?')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between gap-2">
-                      <p className="font-semibold text-textPrimary truncate">{inq.renter?.fullName ?? 'Renter'}</p>
-                      <span className="text-xs text-textSecondary shrink-0">{formatTimeAgo(inq.createdAt)}</span>
+                      <p className="font-semibold text-textPrimary dark:text-slate-100 truncate">{inq.renter?.fullName ?? 'Renter'}</p>
+                      <span className="text-xs text-textSecondary dark:text-slate-400 shrink-0">{formatTimeAgo(inq.createdAt)}</span>
                     </div>
-                    <p className="text-xs text-textSecondary truncate">{inq.property?.title ?? 'Property'}</p>
-                    <p className="text-sm text-textPrimary line-clamp-1 mt-1">{inq.message}</p>
-                    <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-textSecondary dark:text-slate-400 truncate">{inq.property?.title ?? 'Property'}</p>
+                    <p className="text-sm text-textPrimary dark:text-slate-200 line-clamp-1 mt-1">{inq.message}</p>
+                    <div className="flex items-center justify-between mt-2 gap-2">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${inquiryBadge(inq.status)}`}>
                         {inq.status === 'Pending' ? 'New' : inq.status}
                       </span>
-                      <span className="text-sm font-semibold text-primary">Quick reply</span>
+                      <span className="text-sm font-semibold text-primary dark:text-brandTeal">Quick reply</span>
                     </div>
                   </div>
                 </Link>
