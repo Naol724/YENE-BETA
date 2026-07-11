@@ -15,6 +15,13 @@ const generateToken = (id) => {
   });
 };
 
+// Generate Refresh Token
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRE,
+  });
+};
+
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
@@ -34,21 +41,26 @@ exports.register = async (req, res) => {
     const normalizedRole =
       role === 'OWNER' || role === 'owner' ? 'OWNER' : 'RENTER';
 
+    // Without SMTP, auto-verify so signup/login work locally (OTP email cannot be delivered).
+    const emailConfigured = isEmailConfigured();
+
     const user = await User.create({
       fullName,
       email,
       phone,
       password,
       role: normalizedRole,
+      isEmailVerified: !emailConfigured,
       ...(normalizedRole === 'OWNER' ? { isApproved: true } : {}),
     });
 
-    const plainOtp = user.generateOTP();
-    await user.save();
-
     let emailSent = false;
-    const emailAttempted = isEmailConfigured();
-    if (emailAttempted) {
+    let registerMessage =
+      'Registration successful. We sent a verification code to your email.';
+
+    if (emailConfigured) {
+      const plainOtp = user.generateOTP();
+      await user.save();
       try {
         await sendEmail({
           email: user.email,
@@ -63,35 +75,33 @@ exports.register = async (req, res) => {
         console.log('Verification code:', plainOtp);
         console.log('Expires in 10 minutes.');
         console.log('====================================================================\n');
+        registerMessage =
+          'Registration successful. The verification email could not be sent — check the API terminal for your code, or fix SMTP settings in backend/.env.';
+      }
+      if (emailSent) {
+        registerMessage =
+          'Registration successful. We sent a verification code to your email.';
       }
     } else {
-      console.log('\n========== EMAIL VERIFICATION (server terminal — set EMAIL_* in backend/.env to send mail) ==========');
-      console.log('To:', user.email);
-      console.log('Verification code:', plainOtp);
-      console.log('Expires in 10 minutes. Use /verify-email in the app with this code.');
-      console.log('========================================================================================\n');
-    }
-
-    let registerMessage =
-      'Registration successful. We sent a verification code to your email.';
-    if (!emailSent && emailAttempted) {
       registerMessage =
-        'Registration successful. The verification email could not be sent — check the API terminal for your code, or fix SMTP settings in backend/.env.';
-    } else if (!emailSent && !emailAttempted) {
-      registerMessage =
-        'Registration successful. Add EMAIL_HOST, EMAIL_USER, and EMAIL_PASS to backend/.env to get the code by email. For now, it is printed in the API terminal.';
+        'Registration successful. You can sign in now. (Email verification is skipped until EMAIL_USER and EMAIL_PASS are set in backend/.env.)';
+      console.log(
+        `[auth] Registered ${user.email} as verified (SMTP not configured). Set EMAIL_* to require email OTP.`
+      );
     }
 
     res.status(201).json({
       success: true,
       message: registerMessage,
       token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        isApproved: user.isApproved
+        isApproved: user.isApproved,
+        isEmailVerified: user.isEmailVerified,
       }
     });
   } catch (error) {
@@ -140,15 +150,35 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Email verification gate (admins skipped). If SMTP is not configured, auto-verify so login works.
+    if (!user.isEmailVerified && user.role !== 'ADMIN') {
+      if (!isEmailConfigured()) {
+        user.isEmailVerified = true;
+        user.otp = undefined;
+        user.otpExpire = undefined;
+        await user.save({ validateBeforeSave: false });
+        console.log(`[auth] Auto-verified ${user.email} on login (SMTP not configured).`);
+      } else {
+        return res.status(403).json({
+          success: false,
+          code: 'EMAIL_NOT_VERIFIED',
+          message:
+            'Please verify your email before logging in. Check your inbox for the code, or use Resend code on the verify page.',
+        });
+      }
+    }
+
     res.status(200).json({
       success: true,
       token: generateToken(user._id),
+      refreshToken: generateRefreshToken(user._id),
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        isApproved: user.isApproved
+        isApproved: user.isApproved,
+        isEmailVerified: user.isEmailVerified,
       }
     });
   } catch (error) {
@@ -183,15 +213,22 @@ exports.verifyEmail = async (req, res) => {
       req.body.email == null
         ? ''
         : String(req.body.email).trim().toLowerCase();
-    const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
-    
-    const user = await User.findOne({ 
-      email, 
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and verification code are required' });
+    }
+
+    const hashedOTP = crypto.createHash('sha256').update(String(otp).trim()).digest('hex');
+
+    const user = await User.findOne({
+      email,
       otp: hashedOTP,
-      otpExpire: { $gt: Date.now() }
+      otpExpire: { $gt: Date.now() },
     });
 
-    if(!user) return res.status(400).json({success: false, message: 'Invalid or expired OTP'});
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
 
     user.isEmailVerified = true;
     user.otp = undefined;
@@ -199,7 +236,85 @@ exports.verifyEmail = async (req, res) => {
     await user.save();
 
     res.status(200).json({ success: true, message: 'Email verified successfully' });
-  } catch(error) {
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: dbErrorMessage(error) });
+  }
+};
+
+// @desc    Resend verification email (or auto-verify when SMTP is not configured)
+// @route   POST /api/auth/resend-verification
+// @access  Public
+exports.resendVerification = async (req, res) => {
+  try {
+    const email =
+      req.body.email == null
+        ? ''
+        : String(req.body.email).trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists for that email, a verification code was sent.',
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(200).json({
+        success: true,
+        alreadyVerified: true,
+        message: 'This email is already verified. You can sign in.',
+      });
+    }
+
+    if (!isEmailConfigured()) {
+      user.isEmailVerified = true;
+      user.otp = undefined;
+      user.otpExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(200).json({
+        success: true,
+        alreadyVerified: true,
+        emailDelivery: false,
+        message:
+          'Email delivery is not configured on the server, so your account was verified automatically. You can sign in now.',
+      });
+    }
+
+    const plainOtp = user.generateOTP();
+    await user.save();
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your YENE BET verification code',
+        message: `Hi ${user.fullName},\n\nYour verification code is: ${plainOtp}\n\nIt expires in 10 minutes.\n\nIf you did not sign up for YENE BET, you can ignore this email.`,
+      });
+      return res.status(200).json({
+        success: true,
+        emailDelivery: true,
+        message: 'A new verification code was sent to your email.',
+      });
+    } catch (err) {
+      console.error('Resend verification email failed:', err.message || err);
+      console.log('\n========== EMAIL VERIFICATION (fallback — API terminal) ==========');
+      console.log('To:', user.email);
+      console.log('Verification code:', plainOtp);
+      console.log('Expires in 10 minutes.');
+      console.log('====================================================================\n');
+      return res.status(200).json({
+        success: true,
+        emailDelivery: false,
+        message:
+          'Could not send email. Check EMAIL_USER / EMAIL_PASS in backend/.env, or use the code printed in the API terminal.',
+      });
+    }
+  } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: dbErrorMessage(error) });
   }
@@ -293,3 +408,62 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
+
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh-token
+// @access  Public
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Refresh token is required' 
+      });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid or expired refresh token' 
+      });
+    }
+
+    // Find user
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Generate new tokens
+    const newAccessToken = generateToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        isApproved: user.isApproved
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: dbErrorMessage(error) 
+    });
+  }
+};
