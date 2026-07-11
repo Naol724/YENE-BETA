@@ -56,6 +56,9 @@ const TRUST = [
   },
 ] as const;
 
+const linkClass =
+  'text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors text-sm leading-snug';
+
 const SiteFooter: React.FC = () => {
   const [email, setEmail] = useState('');
   const [frequency, setFrequency] = useState<'weekly' | 'monthly'>('weekly');
@@ -72,33 +75,33 @@ const SiteFooter: React.FC = () => {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-16 md:mt-24 border-t border-border dark:border-slate-700 bg-[#f0f4f8] dark:bg-slate-950 transition-colors">
+    <footer className="mt-10 sm:mt-16 md:mt-24 border-t border-border dark:border-slate-700 bg-[#f0f4f8] dark:bg-slate-950 transition-colors overflow-x-hidden">
       {/* CTA strip */}
       <div className="bg-gradient-to-r from-brandNavy via-brandNavy to-[#0f2744] text-white">
-        <div className="max-w-7xl mx-auto px-4 py-10 md:py-12 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-          <div className="max-w-xl">
-            <p className="inline-flex items-center gap-2 text-brandTeal/90 text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-10 md:py-12 flex flex-col md:flex-row md:items-center md:justify-between gap-5 sm:gap-8">
+          <div className="max-w-xl min-w-0 text-center md:text-left">
+            <p className="inline-flex items-center justify-center md:justify-start gap-2 text-brandTeal/90 text-xs sm:text-sm font-medium">
+              <Sparkles className="h-4 w-4 shrink-0" />
               Rent smarter in Ethiopia
             </p>
-            <h2 className="mt-2 text-2xl md:text-3xl font-bold tracking-tight">
+            <h2 className="mt-2 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight leading-snug px-1 sm:px-0">
               Ready to find your next home—or list one?
             </h2>
-            <p className="mt-3 text-white/80 text-sm md:text-base leading-relaxed">
-              Search thousands of rentals, save favorites, and message owners in one place.
+            <p className="mt-2 sm:mt-3 text-white/80 text-sm md:text-base leading-relaxed max-w-md mx-auto md:mx-0">
+              Search rentals, save favorites, and message owners in one place.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+          <div className="flex flex-col xs:flex-row sm:flex-row gap-2.5 sm:gap-3 w-full sm:w-auto max-w-md mx-auto md:mx-0 md:max-w-none shrink-0">
             <Link
               to="/listings"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-brandTeal px-6 py-3.5 text-sm font-semibold text-white shadow-lg hover:bg-brandTealDark transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brandTeal px-4 sm:px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-brandTealDark transition-colors flex-1 sm:flex-none"
             >
               Browse listings
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/register"
-              className="inline-flex items-center justify-center rounded-xl border-2 border-white/30 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
+              className="inline-flex items-center justify-center rounded-xl border-2 border-white/30 bg-white/10 px-4 sm:px-6 py-3 text-sm font-semibold text-white hover:bg-white/15 transition-colors flex-1 sm:flex-none"
             >
               Create account
             </Link>
@@ -106,20 +109,22 @@ const SiteFooter: React.FC = () => {
         </div>
       </div>
 
-      {/* Trust row */}
-      <div className="max-w-7xl mx-auto px-4 -mt-6 mb-10 md:mb-14 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Trust row — no negative overlap on mobile */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-5 sm:mt-0 sm:-mt-4 md:-mt-6 mb-6 sm:mb-10 md:mb-12 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
           {TRUST.map(({ icon: Icon, title, text }) => (
             <div
               key={title}
-              className="rounded-2xl bg-white dark:bg-darksurface border border-border dark:border-slate-600 p-5 shadow-md flex gap-4"
+              className="rounded-xl sm:rounded-2xl bg-white dark:bg-darksurface border border-border dark:border-slate-600 p-3.5 sm:p-5 shadow-sm sm:shadow-md flex gap-3"
             >
-              <div className="h-12 w-12 rounded-xl bg-brandTeal/10 flex items-center justify-center shrink-0 text-brandTeal">
-                <Icon className="h-6 w-6" aria-hidden />
+              <div className="h-9 w-9 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-brandTeal/10 flex items-center justify-center shrink-0 text-brandTeal">
+                <Icon className="h-4 w-4 sm:h-6 sm:w-6" aria-hidden />
               </div>
-              <div>
-                <h3 className="font-bold text-brandNavy dark:text-white text-sm">{title}</h3>
-                <p className="mt-1 text-sm text-textSecondary dark:text-darkmuted leading-snug">{text}</p>
+              <div className="min-w-0">
+                <h3 className="font-bold text-brandNavy dark:text-white text-sm leading-tight">{title}</h3>
+                <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-textSecondary dark:text-darkmuted leading-snug">
+                  {text}
+                </p>
               </div>
             </div>
           ))}
@@ -127,22 +132,25 @@ const SiteFooter: React.FC = () => {
       </div>
 
       {/* Newsletter */}
-      <div className="max-w-5xl mx-auto px-4 md:px-8 pb-12 md:pb-14">
-        <div className="rounded-3xl bg-white dark:bg-darksurface border border-border dark:border-slate-600 shadow-lg overflow-hidden">
-          <div className="p-8 md:p-10 md:flex md:gap-10 md:items-start">
-            <div className="flex-1">
-              <span className="inline-block text-xs font-bold uppercase tracking-wider text-brandTeal mb-2">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pb-6 sm:pb-12 md:pb-14">
+        <div className="rounded-xl sm:rounded-3xl bg-white dark:bg-darksurface border border-border dark:border-slate-600 shadow-md sm:shadow-lg overflow-hidden">
+          <div className="p-4 sm:p-8 md:p-10 md:flex md:gap-10 md:items-start">
+            <div className="flex-1 min-w-0">
+              <span className="inline-block text-xs font-bold uppercase tracking-wider text-brandTeal mb-1 sm:mb-2">
                 Newsletter
               </span>
-              <h2 className="text-xl md:text-2xl font-bold text-brandNavy dark:text-white">
+              <h2 className="text-base sm:text-xl md:text-2xl font-bold text-brandNavy dark:text-white">
                 Stay ahead of new rentals
               </h2>
-              <p className="mt-2 text-sm text-textSecondary dark:text-darkmuted leading-relaxed">
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-textSecondary dark:text-darkmuted leading-relaxed">
                 Get curated matches and tips for renting in Ethiopian cities. Unsubscribe anytime.
               </p>
             </div>
-            <form onSubmit={handleNewsletterSubmit} className="mt-8 md:mt-0 flex-1 space-y-5 min-w-0">
-              <div className="flex flex-wrap gap-6 text-sm">
+            <form
+              onSubmit={handleNewsletterSubmit}
+              className="mt-4 md:mt-0 flex-1 space-y-3 sm:space-y-5 min-w-0"
+            >
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
                 <label className="flex items-center gap-2 cursor-pointer text-brandNavy dark:text-slate-200">
                   <input
                     type="radio"
@@ -164,7 +172,7 @@ const SiteFooter: React.FC = () => {
                   Monthly
                 </label>
               </div>
-              <div className="flex flex-wrap gap-4 text-sm">
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
                 {(
                   [
                     { id: 'all' as const, label: 'All' },
@@ -172,7 +180,10 @@ const SiteFooter: React.FC = () => {
                     { id: 'rent' as const, label: 'Rent' },
                   ] as const
                 ).map(({ id, label }) => (
-                  <label key={id} className="flex items-center gap-2 cursor-pointer text-brandNavy dark:text-slate-200">
+                  <label
+                    key={id}
+                    className="flex items-center gap-2 cursor-pointer text-brandNavy dark:text-slate-200"
+                  >
                     <input
                       type="radio"
                       name="propertyType"
@@ -184,18 +195,18 @@ const SiteFooter: React.FC = () => {
                   </label>
                 ))}
               </div>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col xs:flex-row sm:flex-row gap-2 sm:gap-3">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="input-field flex-1 rounded-xl border-border dark:border-slate-600 bg-surface dark:bg-slate-800/50"
+                  className="input-field flex-1 min-w-0 rounded-xl border-border dark:border-slate-600 bg-surface dark:bg-slate-800/50 w-full text-sm"
                   autoComplete="email"
                 />
                 <button
                   type="submit"
-                  className="btn-teal px-8 rounded-xl uppercase text-sm font-bold tracking-wide shrink-0 justify-center"
+                  className="btn-teal px-5 sm:px-8 rounded-xl uppercase text-xs sm:text-sm font-bold tracking-wide shrink-0 justify-center w-full sm:w-auto py-2.5"
                 >
                   Subscribe
                 </button>
@@ -212,158 +223,169 @@ const SiteFooter: React.FC = () => {
 
       <div className="border-t border-brandNavy/10 dark:border-slate-700" />
 
-      {/* Links & contact */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+      {/* Links & contact — compact 2-col on mobile */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-12 md:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12">
+          {/* Brand + contact */}
           <div className="lg:col-span-4">
-            <Link to="/" className="inline-flex items-center gap-3 group">
-              <span className="w-12 h-12 rounded-full bg-brandNavy flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
-                <Home className="h-6 w-6" />
+            <Link to="/" className="inline-flex items-center gap-2.5 group">
+              <span className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-brandNavy flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+                <Home className="h-4 w-4 sm:h-6 sm:w-6" />
               </span>
-              <span className="text-xl font-bold tracking-tight text-brandNavy dark:text-white uppercase">
+              <span className="text-base sm:text-xl font-bold tracking-tight text-brandNavy dark:text-white uppercase">
                 {SITE_NAME}
               </span>
             </Link>
-            <p className="mt-4 max-w-sm text-brandNavy/85 dark:text-slate-300 text-sm leading-relaxed">
-              Ethiopia&apos;s rental marketplace—browse verified homes, message owners, and manage your search in one
-              place.
+            <p className="mt-2 sm:mt-4 max-w-sm text-brandNavy/85 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+              Ethiopia&apos;s rental marketplace—browse verified homes, message owners, and manage your
+              search in one place.
             </p>
-            <ul className="mt-8 space-y-3 text-sm text-brandNavy dark:text-slate-200">
-              <li className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 shrink-0 mt-0.5 text-brandTeal" />
-                <span>Addis Ababa, Ethiopia</span>
+            <ul className="mt-3 sm:mt-6 flex flex-col sm:flex-col gap-1.5 sm:gap-3 text-xs sm:text-sm text-brandNavy dark:text-slate-200">
+              <li className="flex items-center gap-2 min-w-0">
+                <MapPin className="h-4 w-4 shrink-0 text-brandTeal" />
+                <span className="truncate">Addis Ababa, Ethiopia</span>
               </li>
-              <li className="flex items-start gap-3">
-                <Phone className="h-5 w-5 shrink-0 mt-0.5 text-brandTeal" />
-                <a href="tel:+251911000000" className="hover:text-brandTeal transition-colors">
+              <li className="flex items-center gap-2 min-w-0">
+                <Phone className="h-4 w-4 shrink-0 text-brandTeal" />
+                <a href="tel:+251911000000" className="hover:text-brandTeal transition-colors truncate">
                   +251 911 000 000
                 </a>
               </li>
-              <li className="flex items-start gap-3">
-                <Mail className="h-5 w-5 shrink-0 mt-0.5 text-brandTeal" />
-                <a href="mailto:support@houserental.example" className="hover:text-brandTeal transition-colors">
+              <li className="flex items-center gap-2 min-w-0">
+                <Mail className="h-4 w-4 shrink-0 text-brandTeal" />
+                <a
+                  href="mailto:support@houserental.example"
+                  className="hover:text-brandTeal transition-colors truncate"
+                >
                   support@houserental.example
                 </a>
               </li>
             </ul>
           </div>
 
-          <div className="lg:col-span-2">
-            <h3 className="text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-4">Explore</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link to="/listings" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  All listings
-                </Link>
-              </li>
-              <li>
-                <Link to="/search?city=Addis%20Ababa" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Addis Ababa
-                </Link>
-              </li>
-              <li>
-                <Link to="/favorites" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Saved homes
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Nav columns: 2×2 on phone, wider on desktop */}
+          <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-5 sm:gap-6">
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-2 sm:mb-3">
+                Explore
+              </h3>
+              <ul className="space-y-1.5 sm:space-y-2.5">
+                <li>
+                  <Link to="/listings" className={linkClass}>
+                    All listings
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/search?city=Addis%20Ababa" className={linkClass}>
+                    Addis Ababa
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/favorites" className={linkClass}>
+                    Saved homes
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          <div className="lg:col-span-3">
-            <h3 className="text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-4">Company</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#about" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  About us
-                </a>
-              </li>
-              <li>
-                <a href="/#blog" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Blog
-                </a>
-              </li>
-              <li>
-                <a href="/#faq" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  FAQs
-                </a>
-              </li>
-              <li>
-                <a
-                  href="mailto:support@houserental.example"
-                  className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors"
-                >
-                  Contact support
-                </a>
-              </li>
-            </ul>
-          </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-2 sm:mb-3">
+                Company
+              </h3>
+              <ul className="space-y-1.5 sm:space-y-2.5">
+                <li>
+                  <a href="/#how-it-works" className={linkClass}>
+                    How it works
+                  </a>
+                </li>
+                <li>
+                  <a href="/#how-it-works" className={linkClass}>
+                    About us
+                  </a>
+                </li>
+                <li>
+                  <a href="/#faq" className={linkClass}>
+                    FAQs
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:support@houserental.example" className={linkClass}>
+                    Contact support
+                  </a>
+                </li>
+              </ul>
+            </div>
 
-          <div className="lg:col-span-3">
-            <h3 className="text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-4">For owners</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link to="/register" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  List a property
-                </Link>
-              </li>
-              <li>
-                <Link to="/owner" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Owner dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/search" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Find an agent
-                </Link>
-              </li>
-            </ul>
-            <h3 className="text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-4 mt-8">Legal</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#privacy" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Privacy policy
-                </a>
-              </li>
-              <li>
-                <a href="#terms" className="text-textSecondary dark:text-slate-400 hover:text-brandTeal transition-colors">
-                  Terms of service
-                </a>
-              </li>
-            </ul>
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-2 sm:mb-3">
+                For owners
+              </h3>
+              <ul className="space-y-1.5 sm:space-y-2.5">
+                <li>
+                  <Link to="/register" className={linkClass}>
+                    List a property
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/owner" className={linkClass}>
+                    Owner dashboard
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-brandNavy dark:text-white uppercase tracking-wide mb-2 sm:mb-3">
+                Legal
+              </h3>
+              <ul className="space-y-1.5 sm:space-y-2.5">
+                <li>
+                  <a href="#privacy" className={linkClass}>
+                    Privacy policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#terms" className={linkClass}>
+                    Terms of service
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div className="mt-14 pt-8 border-t border-border dark:border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <p className="text-center md:text-left text-sm text-textSecondary dark:text-slate-400 order-2 md:order-1">
-            © {year} {SITE_NAME}. All rights reserved. · ETB pricing · Serving renters & owners nationwide
+        <div className="mt-6 sm:mt-12 pt-4 sm:pt-8 border-t border-border dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+          <p className="text-center sm:text-left text-xs sm:text-sm text-textSecondary dark:text-slate-400 order-2 sm:order-1 leading-relaxed">
+            © {year} {SITE_NAME}. All rights reserved.
+            <span className="hidden sm:inline"> · ETB pricing · Serving renters & owners nationwide</span>
           </p>
-          <div className="flex justify-center md:justify-end gap-5 order-1 md:order-2">
+          <div className="flex justify-center sm:justify-end gap-2.5 sm:gap-5 order-1 sm:order-2">
             <a
               href="https://facebook.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
               aria-label="Facebook"
             >
-              <SocialFacebook className="h-5 w-5" />
+              <SocialFacebook className="h-4 w-4 sm:h-5 sm:w-5" />
             </a>
             <a
               href="https://twitter.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
               aria-label="Twitter"
             >
-              <SocialTwitter className="h-5 w-5" />
+              <SocialTwitter className="h-4 w-4 sm:h-5 sm:w-5" />
             </a>
             <a
               href="https://instagram.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-white dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-textSecondary hover:text-brandTeal hover:border-brandTeal/40 transition-colors"
               aria-label="Instagram"
             >
-              <SocialInstagram className="h-5 w-5" />
+              <SocialInstagram className="h-4 w-4 sm:h-5 sm:w-5" />
             </a>
           </div>
         </div>
