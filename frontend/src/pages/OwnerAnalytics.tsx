@@ -57,11 +57,30 @@ function buildSeries(
   }));
 }
 
+function useIsDark() {
+  const [dark, setDark] = useState(() =>
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false
+  );
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setDark(root.classList.contains('dark'));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
+}
+
 export default function OwnerAnalytics() {
   const [range, setRange] = useState<Range>('30');
   const [houses, setHouses] = useState<{ views?: number; title?: string; createdAt?: string }[]>([]);
   const [inquiries, setInquiries] = useState<{ createdAt?: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const isDark = useIsDark();
+
+  const gridStroke = isDark ? '#334155' : '#E9ECEF';
+  const tickFill = isDark ? '#94a3b8' : '#4B5563';
 
   useEffect(() => {
     (async () => {
@@ -97,7 +116,12 @@ export default function OwnerAnalytics() {
   }, [houses]);
 
   const exportCsv = () => {
-    const rows = [['Metric', 'Value'], ['Total views', String(totalViews)], ['Total inquiries', String(totalInq)], ['Conversion %', String(conversion)]];
+    const rows = [
+      ['Metric', 'Value'],
+      ['Total views', String(totalViews)],
+      ['Total inquiries', String(totalInq)],
+      ['Conversion %', String(conversion)],
+    ];
     const blob = new Blob([rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -106,13 +130,13 @@ export default function OwnerAnalytics() {
   };
 
   if (loading) {
-    return <div className="animate-pulse h-64 bg-surface rounded-xl" />;
+    return <div className="animate-pulse h-64 bg-surface dark:bg-slate-800 rounded-xl" />;
   }
 
   return (
-    <div className="max-w-5xl mx-auto animate-fade-in space-y-8">
+    <div className="max-w-5xl mx-auto animate-fade-in space-y-6 sm:space-y-8 text-textPrimary dark:text-slate-100">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-[28px] font-bold">Analytics</h1>
+        <h1 className="text-2xl sm:text-[28px] font-bold text-textPrimary dark:text-white">Analytics</h1>
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Date range">
           {(['7', '30', '90'] as Range[]).map((r) => (
             <button
@@ -121,8 +145,10 @@ export default function OwnerAnalytics() {
               role="tab"
               aria-selected={range === r}
               onClick={() => setRange(r)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium border ${
-                range === r ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-white'
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                range === r
+                  ? 'border-brandTealDark dark:border-brandTeal bg-brandTeal/10 text-brandTealDark dark:text-brandTeal'
+                  : 'border-border dark:border-slate-600 bg-white dark:bg-slate-800 text-textPrimary dark:text-slate-200'
               }`}
             >
               Last {r} days
@@ -133,46 +159,62 @@ export default function OwnerAnalytics() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="card-container">
-          <p className="text-sm text-textSecondary">Total views</p>
-          <p className="text-[32px] font-bold">{totalViews}</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400">Total views</p>
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white">{totalViews}</p>
         </div>
         <div className="card-container">
-          <p className="text-sm text-textSecondary">Total inquiries</p>
-          <p className="text-[32px] font-bold">{totalInq}</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400">Total inquiries</p>
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white">{totalInq}</p>
         </div>
         <div className="card-container">
-          <p className="text-sm text-textSecondary">Conversion</p>
-          <p className="text-[32px] font-bold">{conversion}%</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400">Conversion</p>
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white">{conversion}%</p>
         </div>
         <div className="card-container">
-          <p className="text-sm text-textSecondary">Avg. response</p>
-          <p className="text-[32px] font-bold">—</p>
-          <p className="text-xs text-textSecondary mt-1">Connect backend for timings</p>
+          <p className="text-sm text-textSecondary dark:text-slate-400">Avg. response</p>
+          <p className="text-2xl sm:text-[32px] font-bold text-textPrimary dark:text-white">—</p>
+          <p className="text-xs text-textSecondary dark:text-slate-400 mt-1">Connect backend for timings</p>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-border rounded-xl p-4 h-80">
-          <h2 className="text-lg font-semibold mb-4">Views over time</h2>
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-darksurface border border-border dark:border-slate-700 rounded-xl p-3 sm:p-4 h-72 sm:h-80">
+          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-textPrimary dark:text-white">
+            Views over time
+          </h2>
           <ResponsiveContainer width="100%" height="85%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E9ECEF" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: tickFill }} />
+              <YAxis tick={{ fontSize: 11, fill: tickFill }} />
+              <Tooltip
+                contentStyle={{
+                  background: isDark ? '#1e293b' : '#fff',
+                  border: `1px solid ${isDark ? '#334155' : '#E9ECEF'}`,
+                  color: isDark ? '#f1f5f9' : '#1A2B48',
+                }}
+              />
               <Legend />
-              <Line type="monotone" dataKey="views" stroke="#0066CC" strokeWidth={2} dot={false} name="Views" />
+              <Line type="monotone" dataKey="views" stroke="#149B9C" strokeWidth={2} dot={false} name="Views" />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white border border-border rounded-xl p-4 h-80">
-          <h2 className="text-lg font-semibold mb-4">Inquiries over time</h2>
+        <div className="bg-white dark:bg-darksurface border border-border dark:border-slate-700 rounded-xl p-3 sm:p-4 h-72 sm:h-80">
+          <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-textPrimary dark:text-white">
+            Inquiries over time
+          </h2>
           <ResponsiveContainer width="100%" height="85%">
             <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E9ECEF" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: tickFill }} />
+              <YAxis tick={{ fontSize: 11, fill: tickFill }} />
+              <Tooltip
+                contentStyle={{
+                  background: isDark ? '#1e293b' : '#fff',
+                  border: `1px solid ${isDark ? '#334155' : '#E9ECEF'}`,
+                  color: isDark ? '#f1f5f9' : '#1A2B48',
+                }}
+              />
               <Legend />
               <Bar dataKey="inquiries" fill="#28A745" name="Inquiries" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -180,24 +222,36 @@ export default function OwnerAnalytics() {
         </div>
       </div>
 
-      <div className="bg-white border border-border rounded-xl p-4 h-80">
-        <h2 className="text-lg font-semibold mb-4">Top listings by views</h2>
+      <div className="bg-white dark:bg-darksurface border border-border dark:border-slate-700 rounded-xl p-3 sm:p-4 h-72 sm:h-80">
+        <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-textPrimary dark:text-white">
+          Top listings by views
+        </h2>
         <ResponsiveContainer width="100%" height="85%">
-          <BarChart data={topListings} layout="vertical" margin={{ left: 16, right: 16 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E9ECEF" />
-            <XAxis type="number" />
-            <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="views" fill="#0066CC" name="Views" radius={[0, 4, 4, 0]} />
+          <BarChart data={topListings} layout="vertical" margin={{ left: 8, right: 16 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+            <XAxis type="number" tick={{ fill: tickFill, fontSize: 11 }} />
+            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: tickFill }} />
+            <Tooltip
+              contentStyle={{
+                background: isDark ? '#1e293b' : '#fff',
+                border: `1px solid ${isDark ? '#334155' : '#E9ECEF'}`,
+                color: isDark ? '#f1f5f9' : '#1A2B48',
+              }}
+            />
+            <Bar dataKey="views" fill="#149B9C" name="Views" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="rounded-xl border border-dashed border-border bg-surface p-6 text-center text-textSecondary text-sm">
+      <div className="rounded-xl border border-dashed border-border dark:border-slate-600 bg-surface dark:bg-slate-800/50 p-4 sm:p-6 text-center text-textSecondary dark:text-slate-400 text-sm">
         Geographic view map can be added when view geo data is available from analytics API.
       </div>
 
-      <button type="button" onClick={exportCsv} className="btn-secondary !bg-white !text-primary border-2 border-primary">
+      <button
+        type="button"
+        onClick={exportCsv}
+        className="btn-secondary border-2 border-brandNavy dark:border-brandTeal text-brandNavy dark:text-brandTeal font-semibold"
+      >
         Download CSV summary
       </button>
     </div>
