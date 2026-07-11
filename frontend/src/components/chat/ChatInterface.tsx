@@ -18,6 +18,7 @@ import type { RootState } from '../../store';
 import api from '../../utils/api';
 import { getSocketOrigin } from '../../utils/api';
 import BackNavButton from '../BackNavButton';
+import { MediaImage } from '../MediaImage';
 
 interface Message {
   _id: string;
@@ -192,7 +193,7 @@ const ChatInterface: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-darkbg">
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -202,10 +203,10 @@ const ChatInterface: React.FC = () => {
 
   if (!inquiry) {
     return (
-      <div className="flex flex-col h-screen bg-white">
+      <div className="flex flex-col h-screen bg-white dark:bg-darkbg">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <p className="text-gray-500 mb-4">Conversation not found</p>
+            <p className="text-gray-600 dark:text-slate-400 mb-4">Conversation not found</p>
             <button
               onClick={() => navigate('/inquiries')}
               className="btn-primary"
@@ -219,9 +220,9 @@ const ChatInterface: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-white dark:bg-darkbg">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-white dark:bg-darksurface border-b border-gray-200 dark:border-slate-700 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <BackNavButton fallbackTo="/inquiries" />
@@ -230,9 +231,9 @@ const ChatInterface: React.FC = () => {
                 <User className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{getParticipantName()}</h2>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <span className={`inline-flex items-center ${isConnected ? 'text-green-500' : 'text-gray-400'}`}>
+                <h2 className="font-semibold text-gray-900 dark:text-white">{getParticipantName()}</h2>
+                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-slate-400">
+                  <span className={`inline-flex items-center ${isConnected ? 'text-green-500' : 'text-gray-600 dark:text-slate-400'}`}>
                     <div className={`w-2 h-2 rounded-full mr-1 ${isConnected ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                     {isConnected ? 'Online' : 'Offline'}
                   </span>
@@ -244,25 +245,25 @@ const ChatInterface: React.FC = () => {
           </div>
           <div className="flex items-center space-x-2">
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Phone className="w-5 h-5 text-gray-600" />
+              <Phone className="w-5 h-5 text-gray-600 dark:text-slate-300" />
             </button>
             <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <MoreVertical className="w-5 h-5 text-gray-600" />
+              <MoreVertical className="w-5 h-5 text-gray-600 dark:text-slate-300" />
             </button>
           </div>
         </div>
         
         {/* Property Info */}
-        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+        <div className="mt-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">
           <div className="flex items-center space-x-3">
-            <img
-              src={inquiry.property.images?.[0]?.url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'}
+            <MediaImage
+              src={inquiry.property.images?.[0]?.url}
               alt={inquiry.property.title}
               className="w-12 h-12 rounded-lg object-cover"
             />
             <div className="flex-1">
-              <h3 className="font-medium text-gray-900 text-sm">{inquiry.property.title}</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="font-medium text-gray-900 dark:text-white text-sm">{inquiry.property.title}</h3>
+              <p className="text-xs text-gray-600 dark:text-slate-400">
                 {inquiry.property.location.area}, {inquiry.property.location.city}
               </p>
               <p className="text-xs font-medium text-primary">
@@ -290,7 +291,7 @@ const ChatInterface: React.FC = () => {
             <div key={reply._id}>
               {showDate && (
                 <div className="text-center my-4">
-                  <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="text-xs text-gray-600 dark:text-slate-400 bg-gray-100 px-3 py-1 rounded-full">
                     {formatDate(reply.createdAt)}
                   </span>
                 </div>
@@ -301,12 +302,12 @@ const ChatInterface: React.FC = () => {
                     className={`px-4 py-2 rounded-2xl ${
                       isOwn
                         ? 'bg-primary text-white rounded-br-none'
-                        : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                        : 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-slate-100 dark:text-white rounded-bl-none'
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap break-words">{reply.message}</p>
                   </div>
-                  <div className={`flex items-center mt-1 space-x-1 text-xs text-gray-500 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`flex items-center mt-1 space-x-1 text-xs text-gray-600 dark:text-slate-400 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                     <span>{formatTime(reply.createdAt)}</span>
                     {isOwn && (
                       <span className="text-blue-500">
@@ -323,7 +324,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Message Input */}
-      <div className="border-t border-gray-200 px-4 py-3 bg-white">
+      <div className="border-t border-gray-200 dark:border-slate-700 px-4 py-3 bg-white dark:bg-darksurface">
         <form onSubmit={sendMessage} className="flex items-end space-x-2">
           <div className="flex-1">
             <textarea
@@ -331,7 +332,7 @@ const ChatInterface: React.FC = () => {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Type a message..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               rows={1}
               maxLength={500}
               disabled={sending}
