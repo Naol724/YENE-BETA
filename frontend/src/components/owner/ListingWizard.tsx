@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -10,6 +10,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import api from '../../utils/api';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { MediaImage } from '../MediaImage';
 
 const STEPS = [
   'Basic Info',
@@ -241,6 +243,8 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
     setForm((f) => ({ ...f, amenities: [...f.amenities, t], customAmenity: '' }));
   };
 
+  const blobFilesRef = useRef(new Map<string, File>());
+
   const onFiles = (files: FileList | null) => {
     if (!files) return;
     const next: { url: string; isMain: boolean; name?: string }[] = [...form.images];
@@ -250,8 +254,10 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
         alert(`${file.name} exceeds 5MB`);
         return;
       }
+      const objectUrl = URL.createObjectURL(file);
+      blobFilesRef.current.set(objectUrl, file);
       next.push({
-        url: URL.createObjectURL(file),
+        url: objectUrl,
         isMain: next.length === 0,
         name: file.name,
       });
@@ -259,32 +265,45 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
     setForm((f) => ({ ...f, images: next }));
   };
 
-  const readFileAsDataUrl = (blob: Blob): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.onerror = reject;
-      r.readAsDataURL(blob);
-    });
+  const uploadBlobImage = async (blobUrl: string, fileHint?: string) => {
+    const file =
+      blobFilesRef.current.get(blobUrl) ||
+      (await fetch(blobUrl).then(async (r) => {
+        const blob = await r.blob();
+        return new File([blob], fileHint || 'property.jpg', {
+          type: blob.type || 'image/jpeg',
+        });
+      }));
+    const uploadBody = new FormData();
+    uploadBody.append('image', file, file.name);
+    const response = await api.post('/upload/property-image', uploadBody);
+    if (!response.data?.success || !response.data?.data?.url) {
+      throw new Error(response.data?.message || 'Image upload failed');
+    }
+    return resolveMediaUrl(response.data.data.url);
+  };
 
   const buildPayload = async () => {
     const imagesPayload: { url: string; isMain: boolean }[] = [];
     for (let i = 0; i < form.images.length; i++) {
       const img = form.images[i];
       if (img.url.startsWith('blob:')) {
+        const uploadedUrl = await uploadBlobImage(img.url, img.name);
+        imagesPayload.push({ url: uploadedUrl, isMain: img.isMain });
+      } else if (img.url.startsWith('data:')) {
+        // Legacy drafts: convert data URL to a real uploaded file
         const res = await fetch(img.url);
         const blob = await res.blob();
-        if (blob.size > 450 * 1024) {
-          imagesPayload.push({
-            url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800',
-            isMain: img.isMain,
-          });
-        } else {
-          const dataUrl = await readFileAsDataUrl(blob);
-          imagesPayload.push({ url: dataUrl, isMain: img.isMain });
-        }
+        const file = new File([blob], img.name || `property-${i}.jpg`, {
+          type: blob.type || 'image/jpeg',
+        });
+        const objectUrl = URL.createObjectURL(file);
+        blobFilesRef.current.set(objectUrl, file);
+        const uploadedUrl = await uploadBlobImage(objectUrl, file.name);
+        URL.revokeObjectURL(objectUrl);
+        imagesPayload.push({ url: uploadedUrl, isMain: img.isMain });
       } else {
-        imagesPayload.push({ url: img.url, isMain: img.isMain });
+        imagesPayload.push({ url: resolveMediaUrl(img.url), isMain: img.isMain });
       }
     }
 
@@ -316,7 +335,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
         eventsAllowed: form.eventsAllowed,
         additionalRules: form.additionalRules || undefined,
       },
-      status: 'Active',
+      status: 'Pending',
     };
   };
 
@@ -382,8 +401,14 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
         <div className="h-20 w-20 bg-success/15 rounded-full flex items-center justify-center text-success mb-6">
           <CheckCircle2 className="h-10 w-10" aria-hidden />
         </div>
-        <h2 className="text-2xl font-bold mb-2">{mode === 'edit' ? 'Listing updated' : 'Listing published!'}</h2>
-        <p className="text-textSecondary">Redirecting…</p>
+        <h2 className="text-2xl font-bold mb-2">
+          {mode === 'edit' ? 'Listing updated' : 'Submitted for review'}
+        </h2>
+        <p className="text-textSecondary max-w-md">
+          {mode === 'edit'
+            ? 'Redirecting…'
+            : 'An admin will check your listing details. It goes public after approval. Redirecting…'}
+        </p>
       </div>
     );
   }
@@ -414,7 +439,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
                     ? 'border-primary bg-primary text-white'
                     : i < step
                       ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-white'
+                      : 'border-border dark:border-slate-600 bg-white dark:bg-slate-800 text-textSecondary dark:text-slate-300'
                 }`}
               >
                 {i + 1}
@@ -426,7 +451,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
         ))}
       </div>
 
-      <div className="bg-white border border-border rounded-2xl p-5 md:p-8 shadow-sm">
+      <div className="bg-white dark:bg-darksurface border border-border dark:border-slate-700 rounded-2xl p-4 sm:p-5 md:p-8 shadow-sm">
         {step === 0 && (
           <div className="space-y-4">
             <div>
@@ -581,7 +606,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold mb-1" htmlFor="price">
-                Price per month (KES) <span className="text-error">*</span>
+                Price per month (ETB) <span className="text-error">*</span>
               </label>
               <input
                 id="price"
@@ -688,7 +713,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {form.images.map((img, idx) => (
                 <div key={img.url + idx} className="relative group rounded-lg overflow-hidden border border-border aspect-[4/3]">
-                  <img src={img.url} alt="" className="w-full h-full object-cover" />
+                  <MediaImage src={img.url} alt="" className="w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 flex gap-1 p-1 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
@@ -807,7 +832,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
             )}
             <div className="rounded-xl border border-border overflow-hidden">
               <div className="aspect-video bg-surface">
-                <img
+                <MediaImage
                   src={form.images.find((i) => i.isMain)?.url || form.images[0]?.url || ''}
                   alt=""
                   className="w-full h-full object-cover"
@@ -818,17 +843,17 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
                 <p className="text-textSecondary text-sm">
                   {form.area}, {form.city}
                 </p>
-                <p className="text-2xl font-bold text-primary mt-2">KES {form.pricePerMonth || '—'}/mo</p>
+                <p className="text-2xl font-bold text-primary mt-2">ETB {form.pricePerMonth || '—'}/mo</p>
                 <p className="text-sm mt-3 line-clamp-4">{form.description}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="btn-secondary !bg-white !text-textPrimary border border-border" onClick={saveDraft}>
+              <button type="button" className="btn-secondary w-full sm:w-auto dark:!bg-slate-800 dark:!text-slate-100 border border-border dark:border-slate-600" onClick={saveDraft}>
                 Save draft
               </button>
               <button
                 type="button"
-                className="btn-primary flex-1 min-w-[200px]"
+                className="btn-primary !w-full sm:!w-auto sm:flex-none sm:min-w-[200px] flex-1"
                 disabled={submitting}
                 onClick={publish}
               >
@@ -857,7 +882,7 @@ export default function ListingWizard({ mode, houseId, initialHouse }: Props) {
 
       {showPremiumModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="prem-title">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+          <div className="bg-white dark:bg-darksurface rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl border border-border dark:border-slate-700 mx-3">
             <h2 id="prem-title" className="text-xl font-bold mb-2">
               Upgrade to Premium
             </h2>
