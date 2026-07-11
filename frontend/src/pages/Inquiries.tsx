@@ -17,6 +17,7 @@ import DemoBanner from '../components/DemoBanner';
 import BackNavButton from '../components/BackNavButton';
 import { useInquiryRealtime } from '../hooks/useInquiryRealtime';
 import { DEMO_INQUIRIES, isDemoInquiryId } from '../data/demoInquiries';
+import { MediaImage } from '../components/MediaImage';
 
 const POLL_MS = 20000;
 
@@ -236,11 +237,11 @@ const Inquiries: React.FC = () => {
                     } ${unread ? 'font-medium' : ''}`}
                   >
                     <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0 border border-border dark:border-slate-600 relative shadow-sm">
-                      <img
+                      <MediaImage
                         src={
                           typeof inq.property === 'object' && inq.property?.images?.[0]?.url
                             ? inq.property.images[0].url
-                            : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa'
+                            : null
                         }
                         className="w-full h-full object-cover"
                         alt=""
@@ -397,7 +398,7 @@ const Inquiries: React.FC = () => {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-textSecondary p-8 bg-slate-100/50 dark:bg-slate-900/50">
             <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-800 shadow-inner flex items-center justify-center mb-4">
-              <MessageSquare className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+              <MessageSquare className="h-10 w-10 text-gray-500 dark:text-slate-400" />
             </div>
             <p className="font-semibold text-brandNavy dark:text-slate-200">Your messages</p>
             <p className="text-sm text-center mt-1 max-w-xs">Pick a conversation on the left or contact an owner from a listing.</p>
