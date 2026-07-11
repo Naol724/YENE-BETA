@@ -1,6 +1,6 @@
 import type { HouseCardModel } from '../components/PropertyListingCard';
 
-/** Shown when the API returns no listings (database empty). IDs start with `demo-` — cards won’t open fake detail routes. */
+/** Shown when the API returns no listings (database empty). IDs start with `demo-`. */
 export const DEMO_LISTINGS: HouseCardModel[] = [
   {
     _id: 'demo-addis-bole-1',
@@ -119,7 +119,7 @@ export const DEMO_LISTINGS: HouseCardModel[] = [
     title: '2BR flat near Kezira market',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1600566753082-9f6d8b5d0b0b?auto=format&fit=crop&w=1200&q=80',
+        url: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80',
       },
     ],
     location: { city: 'Dire Dawa', area: 'Kezira' },
@@ -167,7 +167,7 @@ export const DEMO_LISTINGS: HouseCardModel[] = [
     title: 'Quiet 1BR near Mekelle University',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=80',
+        url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
       },
     ],
     location: { city: 'Mekelle', area: 'Ayder' },
@@ -183,7 +183,7 @@ export const DEMO_LISTINGS: HouseCardModel[] = [
     title: '2BR near Ayder hospital',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1600573472556-e636d51b6d6d?auto=format&fit=crop&w=1200&q=80',
+        url: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=80',
       },
     ],
     location: { city: 'Mekelle', area: 'Ayder' },
@@ -215,7 +215,7 @@ export const DEMO_LISTINGS: HouseCardModel[] = [
     title: 'Shared compound house with yard',
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1600585152917-df2098678205?auto=format&fit=crop&w=1200&q=80',
+        url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
       },
     ],
     location: { city: 'Adama', area: 'Wonji' },
