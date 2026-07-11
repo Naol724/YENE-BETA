@@ -20,14 +20,14 @@ export default {
         surface: "#F8F9FA",
         utilityBar: "#F1F3F5",
         textPrimary: "#1A2B48",
-        textSecondary: "#757575",
+        textSecondary: "#4B5563",
         border: "#E9ECEF",
         darkbg: "#0f172a",
         darksurface: "#1e293b",
         darkmuted: "#94a3b8",
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
       },
       keyframes: {
         fadeIn: {
