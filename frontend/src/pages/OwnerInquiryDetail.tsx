@@ -104,8 +104,8 @@ export default function OwnerInquiryDetail() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] gap-2">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden />
-        <p className="text-textSecondary text-sm">Loading inquiry…</p>
+        <Loader2 className="h-10 w-10 animate-spin text-brandTeal" aria-hidden />
+        <p className="text-textSecondary dark:text-slate-400 text-sm">Loading inquiry…</p>
       </div>
     );
   }
@@ -113,8 +113,8 @@ export default function OwnerInquiryDetail() {
   if (!inquiry) {
     return (
       <div className="text-center py-16">
-        <p className="text-textSecondary mb-4">Inquiry not found</p>
-        <Link to="/owner/inquiries" className="text-primary font-semibold">
+        <p className="text-textSecondary dark:text-slate-400 mb-4">Inquiry not found</p>
+        <Link to="/owner/inquiries" className="text-brandTealDark dark:text-brandTeal font-semibold">
           Back to inquiries
         </Link>
       </div>
@@ -126,31 +126,31 @@ export default function OwnerInquiryDetail() {
   const replies = (inquiry.replies as { sender?: { _id?: string }; message?: string; createdAt?: string }[]) ?? [];
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in pb-8">
+    <div className="max-w-2xl mx-auto animate-fade-in pb-8 text-textPrimary dark:text-slate-100">
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-textSecondary hover:text-primary mb-6"
+        className="flex items-center gap-2 text-textSecondary dark:text-slate-400 hover:text-brandTealDark dark:hover:text-brandTeal mb-6"
         aria-label="Go back"
       >
         <ArrowLeft className="h-5 w-5" /> Back
       </button>
 
       <header className="flex gap-4 mb-8">
-        <div className="h-14 w-14 rounded-full bg-surface border border-border flex items-center justify-center text-xl font-bold text-textSecondary">
+        <div className="h-14 w-14 rounded-full bg-surface dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center text-xl font-bold text-textSecondary dark:text-slate-300">
           {(renter?.fullName ?? '?')[0]}
         </div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-textPrimary">{renter?.fullName ?? 'Renter'}</h1>
+          <h1 className="text-xl font-bold text-textPrimary dark:text-white">{renter?.fullName ?? 'Renter'}</h1>
           {property?._id && (
             <Link
               to={`/house/${property._id}`}
-              className="text-primary text-sm font-medium inline-flex items-center gap-1 hover:underline"
+              className="text-brandTealDark dark:text-brandTeal text-sm font-medium inline-flex items-center gap-1 hover:underline"
             >
               {property.title} <ExternalLink className="h-3 w-3" />
             </Link>
           )}
-          <p className="text-xs text-textSecondary mt-1">
+          <p className="text-xs text-textSecondary dark:text-slate-400 mt-1">
             Received {inquiry.createdAt ? formatTimeAgo(String(inquiry.createdAt)) : ''}
           </p>
           <span
@@ -158,7 +158,7 @@ export default function OwnerInquiryDetail() {
               inquiry.status === 'Pending'
                 ? 'bg-error/15 text-error'
                 : inquiry.status === 'Read'
-                  ? 'bg-warning/25 text-textPrimary'
+                  ? 'bg-warning/25 text-textPrimary dark:text-amber-100'
                   : 'bg-success/15 text-success'
             }`}
           >
@@ -167,13 +167,16 @@ export default function OwnerInquiryDetail() {
         </div>
       </header>
 
-      <section className="rounded-xl border border-border bg-surface p-4 mb-6" aria-label="Contact information">
-        <h2 className="text-sm font-semibold text-textSecondary mb-3">Contact</h2>
+      <section
+        className="rounded-xl border border-border dark:border-slate-700 bg-surface dark:bg-slate-800/50 p-4 mb-6"
+        aria-label="Contact information"
+      >
+        <h2 className="text-sm font-semibold text-textSecondary dark:text-slate-300 mb-3">Contact</h2>
         <div className="flex flex-wrap gap-3">
           {renter?.phone && (
             <a
               href={`tel:${renter.phone}`}
-              className="inline-flex items-center gap-2 btn-primary !h-10 !text-sm"
+              className="inline-flex items-center gap-2 btn-primary !h-10 !text-sm w-full sm:w-auto"
               aria-label={`Call ${renter.phone}`}
             >
               <Phone className="h-4 w-4" /> Call
@@ -182,7 +185,7 @@ export default function OwnerInquiryDetail() {
           {renter?.email && (
             <a
               href={`mailto:${renter.email}`}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border bg-white font-medium text-sm hover:bg-surface"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-border dark:border-slate-600 bg-white dark:bg-darksurface font-medium text-sm text-textPrimary dark:text-slate-100 hover:bg-surface dark:hover:bg-slate-800 w-full sm:w-auto"
               aria-label={`Email ${renter.email}`}
             >
               <Mail className="h-4 w-4" /> Email
@@ -191,24 +194,36 @@ export default function OwnerInquiryDetail() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-border bg-white p-5 mb-6" aria-label="Original message">
-        <h2 className="text-sm font-semibold text-textSecondary mb-2">Message</h2>
-        <p className="text-textPrimary whitespace-pre-wrap leading-relaxed">{String(inquiry.message ?? '')}</p>
+      <section
+        className="rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface p-4 sm:p-5 mb-6"
+        aria-label="Original message"
+      >
+        <h2 className="text-sm font-semibold text-textSecondary dark:text-slate-300 mb-2">Message</h2>
+        <p className="text-textPrimary dark:text-slate-100 whitespace-pre-wrap leading-relaxed">
+          {String(inquiry.message ?? '')}
+        </p>
       </section>
 
       {replies.length > 0 && (
         <section className="space-y-3 mb-6" aria-label="Conversation history">
-          <h2 className="text-sm font-semibold text-textSecondary">Conversation</h2>
+          <h2 className="text-sm font-semibold text-textSecondary dark:text-slate-300">Conversation</h2>
           {replies.map((r, idx) => {
-            const sid = r.sender && typeof r.sender === 'object' && '_id' in r.sender ? String((r.sender as { _id: string })._id) : String(r.sender);
+            const sid =
+              r.sender && typeof r.sender === 'object' && '_id' in r.sender
+                ? String((r.sender as { _id: string })._id)
+                : String(r.sender);
             const isMe = user?.id && sid === user.id;
             return (
               <div
                 key={idx}
-                className={`p-4 rounded-xl max-w-[95%] ${isMe ? 'ml-auto bg-primary text-white' : 'bg-surface border border-border'}`}
+                className={`p-4 rounded-xl max-w-[95%] ${
+                  isMe
+                    ? 'ml-auto bg-brandTeal text-white'
+                    : 'bg-surface dark:bg-slate-800 border border-border dark:border-slate-600 text-textPrimary dark:text-slate-100'
+                }`}
               >
                 <p className="whitespace-pre-wrap">{r.message}</p>
-                <p className={`text-xs mt-2 ${isMe ? 'text-blue-100' : 'text-textSecondary'}`}>
+                <p className={`text-xs mt-2 ${isMe ? 'text-white/80' : 'text-textSecondary dark:text-slate-400'}`}>
                   {r.createdAt ? new Date(r.createdAt).toLocaleString() : ''}
                 </p>
               </div>
@@ -217,13 +232,16 @@ export default function OwnerInquiryDetail() {
         </section>
       )}
 
-      <form onSubmit={sendReply} className="rounded-xl border border-border bg-white p-5 shadow-sm">
-        <label htmlFor="reply" className="block text-sm font-semibold mb-2">
+      <form
+        onSubmit={sendReply}
+        className="rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface p-4 sm:p-5 shadow-sm"
+      >
+        <label htmlFor="reply" className="block text-sm font-semibold mb-2 text-textPrimary dark:text-white">
           Your reply
         </label>
         <textarea
           id="reply"
-          className="w-full border border-border rounded-lg p-3 min-h-[100px] focus:ring-2 focus:ring-primary"
+          className="input-field !h-auto min-h-[100px] py-3"
           value={reply}
           onChange={(e) => setReply(e.target.value)}
           minLength={10}
@@ -231,18 +249,26 @@ export default function OwnerInquiryDetail() {
           placeholder="Write at least 10 characters…"
           aria-describedby="reply-hint"
         />
-        <p id="reply-hint" className="text-xs text-textSecondary mt-1">
+        <p id="reply-hint" className="text-xs text-textSecondary dark:text-slate-400 mt-1">
           {reply.length}/500
         </p>
-        <div className="flex flex-wrap gap-3 mt-4">
-          <button type="submit" disabled={sending || reply.trim().length < 10} className="btn-primary flex items-center gap-2">
-            {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : sentAnim ? <CheckCircle2 className="h-5 w-5 text-white" /> : null}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+          <button
+            type="submit"
+            disabled={sending || reply.trim().length < 10}
+            className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
+          >
+            {sending ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : sentAnim ? (
+              <CheckCircle2 className="h-5 w-5 text-white" />
+            ) : null}
             Send reply
           </button>
           <button
             type="button"
             onClick={markResponded}
-            className="h-12 px-4 rounded-lg border border-border font-medium hover:bg-surface"
+            className="h-12 px-4 rounded-lg border border-border dark:border-slate-600 font-medium text-textPrimary dark:text-slate-100 hover:bg-surface dark:hover:bg-slate-800 w-full sm:w-auto"
           >
             Mark as responded
           </button>
