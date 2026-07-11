@@ -8,14 +8,48 @@ exports.getHouses = async (req, res) => {
     let query;
     const reqQuery = { ...req.query };
 
-    // Fields to exclude
-    const removeFields = ['select', 'sort', 'page', 'limit', 'minPrice', 'maxPrice', 'amenities'];
-    removeFields.forEach(param => delete reqQuery[param]);
+    // Fields to exclude from generic equality filters
+    const removeFields = [
+      'select',
+      'sort',
+      'page',
+      'limit',
+      'minPrice',
+      'maxPrice',
+      'amenities',
+      'city', // handled with case-insensitive location match below
+      'location', // avoid exact subdocument match on { city } only
+    ];
+    removeFields.forEach((param) => delete reqQuery[param]);
+
+    // Drop dotted location.city if qs left it as a flat key
+    delete reqQuery['location.city'];
+    delete reqQuery['location.area'];
 
     let queryStr = JSON.stringify(reqQuery);
-    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-    
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`);
+
     query = House.find(JSON.parse(queryStr));
+
+    // City / area search (from ?city= or legacy ?location.city=)
+    const cityRaw =
+      (typeof req.query.city === 'string' && req.query.city) ||
+      (req.query.location && typeof req.query.location.city === 'string' && req.query.location.city) ||
+      (typeof req.query['location.city'] === 'string' && req.query['location.city']) ||
+      '';
+    const city = String(cityRaw).trim();
+    if (city) {
+      const escaped = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const cityRegex = new RegExp(escaped, 'i');
+      query = query.where({
+        $or: [
+          { 'location.city': cityRegex },
+          { 'location.area': cityRegex },
+          { 'location.address': cityRegex },
+          { title: cityRegex },
+        ],
+      });
+    }
 
     // Price Range Filter
     if (req.query.minPrice || req.query.maxPrice) {
@@ -30,10 +64,8 @@ exports.getHouses = async (req, res) => {
       query = query.where('amenities').all(amenitiesArr);
     }
 
-    // Only show active/available listings to guests/renters; owners see their own filters via query
-    if (!req.user || req.user.role === 'RENTER') {
-      query = query.where({ status: { $in: ['Active', 'Available'] } });
-    }
+    // Public search: only approved live listings (Pending/Rejected stay hidden)
+    query = query.where({ status: { $in: ['Active', 'Available'] } });
 
     // Sort
     if (req.query.sort) {
@@ -43,11 +75,12 @@ exports.getHouses = async (req, res) => {
       query = query.sort('-createdAt'); // Default newest
     }
 
-    // Pagination
+    // Pagination — count with the same filters
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
-    const total = await House.countDocuments(query);
+    const filterQuery = query.getFilter();
+    const total = await House.countDocuments(filterQuery);
     query = query.skip(startIndex).limit(limit);
 
     // Populate Owner
@@ -80,6 +113,17 @@ exports.getHouse = async (req, res) => {
     });
 
     if (!house) return res.status(404).json({ success: false, message: 'Property not found' });
+
+    const isPublic = ['Active', 'Available'].includes(house.status);
+    if (!isPublic) {
+      const user = req.user;
+      const isOwner = user && house.owner && house.owner._id.toString() === user.id;
+      const isAdmin = user && user.role === 'ADMIN';
+      if (!isOwner && !isAdmin) {
+        return res.status(404).json({ success: false, message: 'Property not found' });
+      }
+    }
+
     res.status(200).json({ success: true, data: house });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -139,9 +183,9 @@ exports.createHouse = async (req, res) => {
       });
     }
 
-    // Set owner and default values
+    // Set owner and default values — new listings need admin approval first
     req.body.owner = req.user.id;
-    req.body.status = req.body.status || 'Available';
+    req.body.status = req.user.role === 'ADMIN' ? (req.body.status || 'Active') : 'Pending';
     req.body.views = 0;
 
     // Ensure at least one image is provided
@@ -170,7 +214,7 @@ exports.createHouse = async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Property listing created successfully',
+      message: 'Listing submitted for admin review. It will appear publicly after approval.',
       data: populatedHouse 
     });
   } catch (error) {
@@ -256,6 +300,20 @@ exports.updateHouse = async (req, res) => {
       }
     }
 
+    // Owners cannot self-publish; rejected/pending edits go back to Pending for review
+    if (!isAdmin) {
+      const ownerAllowedStatus = ['Paused', 'Rented', 'Available'];
+      if (req.body.status) {
+        if (['Pending', 'Rejected'].includes(house.status)) {
+          req.body.status = 'Pending';
+        } else if (!ownerAllowedStatus.includes(req.body.status)) {
+          delete req.body.status;
+        }
+      } else if (house.status === 'Rejected') {
+        req.body.status = 'Pending';
+      }
+    }
+
     // Update the house
     const updatedHouse = await House.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -265,9 +323,12 @@ exports.updateHouse = async (req, res) => {
       select: 'fullName email phone isApproved'
     });
 
+    const needsReview = updatedHouse.status === 'Pending';
     res.status(200).json({ 
       success: true, 
-      message: 'Property updated successfully',
+      message: needsReview
+        ? 'Listing updated and submitted for admin review'
+        : 'Property updated successfully',
       data: updatedHouse 
     });
   } catch (error) {
