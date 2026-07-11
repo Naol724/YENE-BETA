@@ -27,6 +27,7 @@ import Dashboard from './pages/Dashboard';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import { MessageNotificationsProvider } from './context/MessageNotificationsContext';
 
 function AppRoutes() {
   const location = useLocation();
@@ -146,9 +147,11 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col bg-background dark:bg-darkbg text-textPrimary dark:text-slate-100 transition-colors duration-200">
-        <AppRoutes />
-      </div>
+      <MessageNotificationsProvider>
+        <div className="min-h-screen flex flex-col bg-background dark:bg-darkbg text-textPrimary dark:text-slate-100 transition-colors duration-200">
+          <AppRoutes />
+        </div>
+      </MessageNotificationsProvider>
     </Router>
   );
 }
