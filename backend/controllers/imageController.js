@@ -1,6 +1,7 @@
 const { uploadPropertyImages, uploadPropertyImage, getImageUrl, removeImage } = require('../utils/imageUpload');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 // @desc    Upload property images
 // @route   POST /api/upload/property-images
@@ -57,7 +58,7 @@ exports.uploadPropertyImages = async (req, res) => {
 
       // Process uploaded files
       const uploadedImages = req.files.map((file, index) => ({
-        url: getImageUrl(file.filename),
+        url: getImageUrl(file.filename, req),
         public_id: file.filename,
         isMain: index === 0, // First image is main by default
         caption: '',
@@ -119,7 +120,7 @@ exports.uploadPropertyImage = async (req, res) => {
       }
 
       const uploadedImage = {
-        url: getImageUrl(req.file.filename),
+        url: getImageUrl(req.file.filename, req),
         public_id: req.file.filename,
         isMain: false,
         caption: '',
