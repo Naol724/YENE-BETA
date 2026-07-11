@@ -17,10 +17,11 @@ const storage = multer.diskStorage({
 
 // File filter for images only
 const fileFilter = (req, file, cb) => {
-  // Allowed file types
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  
-  if (allowedTypes.includes(file.mimetype)) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedExt = ['.jpg', '.jpeg', '.png', '.webp'];
+
+  if (allowedTypes.includes(file.mimetype) || allowedExt.includes(ext)) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only JPEG, PNG, and WebP images are allowed.'), false);
@@ -44,9 +45,19 @@ const uploadPropertyImages = upload.array('images', 10);
 const uploadPropertyImage = upload.single('image');
 
 // Utility function to get image URL
-const getImageUrl = (filename) => {
-  const base = (process.env.API_BASE_URL || '').replace(/\/$/, '');
-  return `${base}/uploads/properties/${filename}`;
+const getImageUrl = (filename, req) => {
+  const fromEnv = (process.env.API_BASE_URL || '').replace(/\/$/, '');
+  if (fromEnv) {
+    return `${fromEnv}/uploads/properties/${filename}`;
+  }
+  if (req) {
+    const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+    const host = req.get('x-forwarded-host') || req.get('host');
+    if (host) {
+      return `${proto}://${host}/uploads/properties/${filename}`;
+    }
+  }
+  return `/uploads/properties/${filename}`;
 };
 
 // Utility function to remove image
