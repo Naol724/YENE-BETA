@@ -152,8 +152,9 @@ const houseSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Available', 'Rented', 'Active', 'Paused', 'Flagged'],
-    default: 'Available'
+    // Pending = awaiting admin review; Rejected = admin declined
+    enum: ['Pending', 'Available', 'Rented', 'Active', 'Paused', 'Flagged', 'Rejected'],
+    default: 'Pending'
   },
   isPremium: {
     type: Boolean,
