@@ -14,7 +14,7 @@ export const POPULAR_CITY_CARDS: PopularCityCard[] = [
     name: 'Addis Ababa',
     param: 'Addis Ababa',
     image:
-      'https://images.unsplash.com/photo-1578895101408-1a36b834cbd7?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
     tagline: 'Capital & business hub',
     areas: 'Bole · Kazanchis · Sarbet',
     sampleFrom: 'Studios from ~22,000 ETB/mo',
@@ -54,7 +54,7 @@ export const POPULAR_CITY_CARDS: PopularCityCard[] = [
     name: 'Mekelle',
     param: 'Mekelle',
     image:
-      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80',
     tagline: 'Northern regional center',
     areas: 'Ayder · Quiha',
     sampleFrom: '1BR near campus from ~15,000 ETB/mo',
