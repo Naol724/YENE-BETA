@@ -48,8 +48,14 @@ if (process.env.NODE_ENV === 'production') {
 
 // Middleware
 app.use(cors({ origin: frontendOrigin, credentials: true }));
-app.use(helmet());
-app.use(express.json());
+// Allow the SPA (different origin/port) to display images from this API.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
 // Routes
@@ -75,8 +81,16 @@ app.use('/api/admin', admin);
 app.use('/api/bookings', booking);
 app.use('/api/upload', image);
 
+// Ensure uploaded properties directory exists
+const fs = require('fs');
+const uploadDir = path.join(__dirname, 'uploads/properties');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log('[upload] Created directory:', uploadDir);
+}
+
 // Serve uploaded images statically
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -267,6 +281,11 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+  // Personal room for inbox notifications (works even when not viewing a thread)
+  if (socket.userId) {
+    socket.join(`user:${socket.userId}`);
+  }
+
   socket.on('join-inquiry', async (inquiryId, ack) => {
     try {
       if (!inquiryId || typeof inquiryId !== 'string') {
