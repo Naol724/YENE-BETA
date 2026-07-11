@@ -6,12 +6,18 @@ function loadPersistedAuth(): AuthState | undefined {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     if (!raw) return undefined;
-    const { token, user } = JSON.parse(raw) as {
+    const { token, refreshToken, user } = JSON.parse(raw) as {
       token?: string;
+      refreshToken?: string;
       user?: AuthState['user'];
     };
     if (token && user?.id) {
-      return { user: normalizeApiUser(user as Parameters<typeof normalizeApiUser>[0]), token, isAuthenticated: true };
+      return {
+        user: normalizeApiUser(user as Parameters<typeof normalizeApiUser>[0]),
+        token,
+        refreshToken: refreshToken ?? null,
+        isAuthenticated: true,
+      };
     }
   } catch {
     /* ignore */
@@ -27,6 +33,7 @@ const authPersistenceMiddleware: Middleware<object, { auth: AuthState }> =
         AUTH_STORAGE_KEY,
         JSON.stringify({
           token: action.payload.token,
+          refreshToken: action.payload.refreshToken ?? null,
           user: action.payload.user,
         })
       );
@@ -37,7 +44,11 @@ const authPersistenceMiddleware: Middleware<object, { auth: AuthState }> =
       if (auth.token && auth.user) {
         localStorage.setItem(
           AUTH_STORAGE_KEY,
-          JSON.stringify({ token: auth.token, user: auth.user })
+          JSON.stringify({
+            token: auth.token,
+            refreshToken: auth.refreshToken,
+            user: auth.user,
+          })
         );
       }
     }
