@@ -7,7 +7,7 @@ const mpesa = require('../services/mpesaService');
 const PREMIUM_AMOUNT = Number(process.env.PREMIUM_AMOUNT) || 500;
 const PREMIUM_DAYS = Number(process.env.PREMIUM_DAYS) || 30;
 
-// @desc    Simulated payment (dev when M-Pesa env not set)
+// @desc    Simulated payment (dev when M-Pesa env not set) — waits for admin approval
 async function runSimulatedUpgrade(req, res) {
   const { phoneNumber, amount } = req.body;
 
@@ -22,19 +22,16 @@ async function runSimulatedUpgrade(req, res) {
     amount,
     phoneNumber,
     referenceId,
-    status: 'Completed',
+    status: 'AwaitingApproval',
     paymentMethod: 'Simulated',
+    mpesaResultDesc: 'Simulated payment recorded — awaiting admin verification',
   });
-
-  const user = await User.findById(req.user.id);
-  user.isPremium = true;
-  user.premiumExpiresAt = new Date(Date.now() + PREMIUM_DAYS * 24 * 60 * 60 * 1000);
-  await user.save();
 
   return res.status(200).json({
     success: true,
     mode: 'simulated',
-    message: 'Payment simulated and account upgraded successfully.',
+    message:
+      'Payment recorded. An admin will verify the payment and activate Premium. You will see Premium unlock after approval.',
     data: transaction,
   });
 }
@@ -115,7 +112,7 @@ exports.initiatePremiumPayment = async (req, res) => {
       mode: 'mpesa',
       message:
         stk.customerMessage ||
-        'Request sent. Approve the payment on your phone. Premium activates when M-Pesa confirms.',
+        'Request sent. Approve the payment on your phone. After payment, an admin must verify before Premium activates.',
       data: {
         referenceId: transaction.referenceId,
         merchantRequestId: transaction.merchantRequestId,
@@ -132,6 +129,7 @@ exports.initiatePremiumPayment = async (req, res) => {
 
 /**
  * @desc M-Pesa STK callback (server-to-server). Must match MPESA_CALLBACK_URL.
+ * Marks payment as paid and waiting for admin — does NOT grant premium.
  * @route POST /api/premium/mpesa/callback
  */
 exports.mpesaStkCallback = async (req, res) => {
@@ -149,15 +147,9 @@ exports.mpesaStkCallback = async (req, res) => {
       if (tx && tx.status === 'Pending') {
         const ok = resultCode === 0 || resultCode === '0';
         if (ok) {
-          tx.status = 'Completed';
-          tx.mpesaResultDesc = resultDesc || 'Completed';
+          tx.status = 'AwaitingApproval';
+          tx.mpesaResultDesc = resultDesc || 'Payment confirmed — awaiting admin approval';
           await tx.save();
-          const user = await User.findById(tx.user);
-          if (user) {
-            user.isPremium = true;
-            user.premiumExpiresAt = new Date(Date.now() + PREMIUM_DAYS * 24 * 60 * 60 * 1000);
-            await user.save();
-          }
         } else {
           tx.status = 'Failed';
           tx.mpesaResultDesc = resultDesc || String(resultCode);
@@ -186,6 +178,11 @@ exports.checkLimit = async (req, res) => {
     const canAddListing = isPremium || houseCount < 1;
     const freeListingsRemaining = isPremium ? null : Math.max(0, 1 - houseCount);
 
+    const pendingPremium = await Transaction.findOne({
+      user: user._id,
+      status: 'AwaitingApproval',
+    }).sort('-createdAt');
+
     res.status(200).json({
       success: true,
       data: {
@@ -195,6 +192,8 @@ exports.checkLimit = async (req, res) => {
         canAddListing,
         premiumExpiresAt: user.premiumExpiresAt || null,
         freeListingsRemaining,
+        awaitingAdminApproval: Boolean(pendingPremium),
+        pendingReferenceId: pendingPremium?.referenceId || null,
       },
     });
   } catch (error) {
@@ -213,3 +212,5 @@ exports.getTransactions = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.PREMIUM_DAYS = PREMIUM_DAYS;
