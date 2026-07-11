@@ -2,13 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { MapPin, Bed, Bath, Maximize2, Heart, ArrowLeftRight, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize2, Heart, MessageCircle } from 'lucide-react';
 import type { RootState } from '../store';
 import { addFavorite, removeFavorite } from '../services/favoriteService';
 import { formatPublished } from '../utils/formatPublished';
-import DemoListingModal from './DemoListingModal';
-import { DEMO_LISTING_EXTRAS } from '../data/demoListingExtras';
+import { isDemoListingId } from '../data/demoListings';
 import { CONTACT_OWNER_AUTH_STATE } from '../utils/authRedirectState';
+import { MediaImage } from './MediaImage';
 
 export type HouseCardModel = {
   _id: string;
@@ -28,10 +28,8 @@ type BadgeKind = 'For Rent' | 'For Sale' | 'Featured';
 interface PropertyListingCardProps {
   house: HouseCardModel;
   badge: BadgeKind;
-  /** When provided (e.g. from useRenterFavoriteIds), heart syncs with API */
   favoriteHouseIds?: string[];
   onFavoriteToggle?: (houseId: string, nowSaved: boolean) => void;
-  /** Use `grid` on multi-column home/search layouts (removes max-width centering). */
   variant?: 'page' | 'grid';
 }
 
@@ -45,35 +43,14 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((s: RootState) => s.auth);
   const [localLiked, setLocalLiked] = useState(false);
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
 
-  const demoExtra = useMemo(() => {
-    if (!house._id.startsWith('demo-')) return null;
-    return (
-      DEMO_LISTING_EXTRAS[house._id] ?? {
-        description: 'Sample property for exploring the app. Publish real listings from your dashboard to replace demo data.',
-        amenities: ['Demo'],
-        ownerLabel: 'Demo host — messages work on real listings',
-      }
-    );
-  }, [house._id]);
-
+  const isDemo = useMemo(() => isDemoListingId(house._id), [house._id]);
   const controlled = favoriteHouseIds != null;
   const saved = controlled ? favoriteHouseIds.includes(house._id) : localLiked;
-
-  const img =
-    house.images?.[0]?.url ||
-    'https://images.unsplash.com/photo-1560518883-ce09059eeffa';
-
-  const areaLabel = house.squareFootage
-    ? `${house.squareFootage} m²`
-    : '—';
+  const img = house.images?.[0]?.url;
+  const areaLabel = house.squareFootage ? `${house.squareFootage} m²` : '—';
 
   const openDetail = () => {
-    if (house._id.startsWith('demo-')) {
-      setDemoModalOpen(true);
-      return;
-    }
     navigate(`/house/${house._id}`);
   };
 
@@ -92,8 +69,10 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
     }
     if (user?.role !== 'RENTER') return;
 
-    if (house._id.startsWith('demo-')) {
-      toast('Demonstration listing — save works on real properties from your database.', { icon: 'ℹ️' });
+    if (isDemo) {
+      toast('Demonstration listing — save works on real properties from your database.', {
+        icon: 'ℹ️',
+      });
       return;
     }
 
@@ -134,17 +113,22 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
       toast.error('Sign in as a renter to send messages.');
       return;
     }
+    if (isDemo) {
+      toast('Demonstration listing — messaging works on real properties.', { icon: 'ℹ️' });
+      navigate('/inquiries');
+      return;
+    }
     navigate('/inquiries');
   };
 
   return (
     <article
-      className={`bg-white dark:bg-darksurface rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-border/70 dark:border-slate-600 w-full flex flex-col h-full ${
+      className={`bg-white dark:bg-darksurface rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 border border-border/80 dark:border-slate-600 w-full flex flex-col h-full min-w-0 ${
         variant === 'grid' ? 'max-w-none' : 'max-w-3xl mx-auto'
       }`}
     >
       <div
-        className="relative cursor-pointer aspect-[16/10] sm:aspect-[21/9] overflow-hidden"
+        className="relative cursor-pointer aspect-[16/10] overflow-hidden bg-slate-200 dark:bg-slate-800"
         onClick={openDetail}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -156,123 +140,81 @@ const PropertyListingCard: React.FC<PropertyListingCardProps> = ({
         tabIndex={0}
         aria-label={`View ${house.title}`}
       >
-        <img src={img} alt={house.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
+        <MediaImage src={img} alt={house.title} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
 
-        <span className="absolute top-2 sm:top-3 left-2 sm:left-3 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold text-white bg-brandTeal shadow-sm">
+        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold text-white bg-brandTeal shadow-sm">
           {badge}
         </span>
 
-        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex gap-1 sm:gap-2">
-          <button
-            type="button"
-            onClick={handleFavorite}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
-            aria-label={saved ? 'Remove from favorites' : 'Save listing'}
-          >
-            <Heart className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${saved ? 'fill-white text-white' : ''}`} />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
-            aria-label="Compare"
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleFavorite}
+          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/45 hover:bg-black/60 backdrop-blur-sm flex items-center justify-center text-white transition-colors"
+          aria-label={saved ? 'Remove from favorites' : 'Save listing'}
+        >
+          <Heart className={`h-3.5 w-3.5 ${saved ? 'fill-white text-white' : ''}`} />
+        </button>
 
-        <p className="absolute bottom-2 sm:bottom-3 left-3 sm:left-4 text-white font-bold text-lg sm:text-xl md:text-2xl drop-shadow-md">
+        <p className="absolute bottom-2 left-2.5 right-10 text-white font-bold text-base sm:text-lg drop-shadow-md truncate">
           ETB {house.pricing.pricePerMonth.toLocaleString()}
-          <span className="text-xs sm:text-sm font-normal text-white/90"> /mo</span>
+          <span className="text-[11px] sm:text-xs font-normal text-white/90"> /mo</span>
         </p>
       </div>
 
-      <div className={variant === 'grid' ? 'flex flex-col flex-1 min-h-0' : undefined}>
-        <div className="px-3 sm:px-4 md:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3 cursor-pointer" onClick={openDetail}>
-          <h3 className="font-bold text-brandNavy dark:text-slate-100 text-base sm:text-lg leading-snug line-clamp-2">
+      <div className="flex flex-col flex-1 min-h-0 min-w-0">
+        <div className="px-3 sm:px-4 pt-3 pb-2 cursor-pointer" onClick={openDetail}>
+          <h3 className="font-bold text-brandNavy dark:text-slate-100 text-sm sm:text-base leading-snug line-clamp-2">
             {house.title}
           </h3>
-          <div className="flex items-center gap-1 sm:gap-1.5 text-textSecondary dark:text-darkmuted text-xs sm:text-sm mt-2">
-            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <div className="flex items-center gap-1 text-textSecondary dark:text-slate-400 text-xs mt-1.5 min-w-0">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">
               {house.location.city}, {house.location.area}
             </span>
           </div>
         </div>
 
-        <hr className="border-border dark:border-slate-600 mx-3 sm:mx-4 md:mx-5" />
-
-        <div className="px-3 sm:px-4 md:px-5 py-3 sm:py-4 flex justify-between text-textSecondary dark:text-darkmuted text-xs sm:text-sm">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <Bed className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
-            <span>{house.bedrooms}</span>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <Bath className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
-            <span>{house.bathrooms}</span>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 justify-end">
-            <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 opacity-80" />
-            <span className="truncate text-xs sm:text-sm">{areaLabel}</span>
-          </div>
+        <div className="px-3 sm:px-4 py-2 flex items-center gap-3 sm:gap-4 text-textSecondary dark:text-slate-400 text-xs border-t border-border/70 dark:border-slate-700">
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <Bed className="h-3.5 w-3.5 opacity-80" />
+            {house.bedrooms}
+          </span>
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <Bath className="h-3.5 w-3.5 opacity-80" />
+            {house.bathrooms}
+          </span>
+          <span className="inline-flex items-center gap-1 min-w-0 truncate ml-auto">
+            <Maximize2 className="h-3.5 w-3.5 opacity-80 shrink-0" />
+            {areaLabel}
+          </span>
         </div>
 
-        <div className="bg-surface dark:bg-slate-800/50 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 border-t border-border dark:border-slate-600">
-          <p className="text-xs text-textSecondary dark:text-darkmuted">{formatPublished(house.createdAt)}</p>
-        </div>
+        <p className="px-3 sm:px-4 py-1.5 text-[11px] text-textSecondary dark:text-slate-500 bg-surface/80 dark:bg-slate-800/40 border-t border-border/70 dark:border-slate-700">
+          {formatPublished(house.createdAt)}
+        </p>
       </div>
 
       <div
-        className={`px-2 sm:px-3 md:px-5 py-2 sm:py-3 border-t border-border dark:border-slate-600 flex flex-row gap-1 sm:gap-1.5 md:gap-2 ${
-          variant === 'grid' ? 'mt-auto' : ''
-        }`}
+        className="mt-auto px-2.5 sm:px-3 py-2 sm:py-2.5 border-t border-border dark:border-slate-600 grid grid-cols-2 gap-2"
         onClick={(e) => e.stopPropagation()}
       >
-        {demoExtra ? (
-          <>
-            <button
-              type="button"
-              className="btn-primary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-2.5"
-              onClick={() => setDemoModalOpen(true)}
-            >
-              View details
-            </button>
-            <button
-              type="button"
-              className="btn-secondary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-3 py-1.5 sm:py-2 md:py-2.5 inline-flex items-center justify-center gap-0.5 sm:gap-1 md:gap-2"
-              onClick={handleContactOwner}
-            >
-              <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
-              <span className="hidden sm:inline truncate">Contact owner</span>
-              <span className="sm:hidden">Contact</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="btn-primary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-4 py-1.5 sm:py-2 md:py-2.5"
-              onClick={() => navigate(`/house/${house._id}`)}
-            >
-              View details
-            </button>
-            <button
-              type="button"
-              className="btn-secondary flex-1 min-w-0 !h-10 sm:!h-11 md:!h-12 text-[9px] sm:text-[10px] md:text-xs lg:text-sm px-1 sm:px-2 md:px-3 py-1.5 sm:py-2 md:py-2.5 inline-flex items-center justify-center gap-0.5 sm:gap-1 md:gap-2"
-              onClick={handleContactOwner}
-            >
-              <MessageCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 shrink-0" />
-              <span className="hidden sm:inline truncate">Contact owner</span>
-              <span className="sm:hidden">Contact</span>
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          className="btn-primary !h-10 text-xs sm:text-sm px-2 w-full justify-center"
+          onClick={openDetail}
+        >
+          View details
+        </button>
+        <button
+          type="button"
+          className="btn-secondary !h-10 text-xs sm:text-sm px-2 w-full inline-flex items-center justify-center gap-1.5"
+          onClick={handleContactOwner}
+        >
+          <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">Contact</span>
+        </button>
       </div>
-
-      {demoModalOpen && demoExtra && (
-        <DemoListingModal house={house} extra={demoExtra} onClose={() => setDemoModalOpen(false)} />
-      )}
     </article>
   );
 };
