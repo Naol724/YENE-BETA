@@ -7,6 +7,7 @@ import api from '../utils/api';
 import EmptyState from '../components/ui/EmptyState';
 import BackNavButton from '../components/BackNavButton';
 import PropertyCardSkeleton from '../components/PropertyCardSkeleton';
+import { MediaImage } from '../components/MediaImage';
 
 type FavRow = {
   _id: string;
@@ -72,7 +73,7 @@ const Favorites: React.FC = () => {
           title="No saved properties yet"
           description="Browse listings and tap the heart to save homes you like."
           action={
-            <Link to="/listings" className="btn-primary inline-block">
+            <Link to="/listings" className="btn-primary text-center">
               Browse listings
             </Link>
           }
@@ -89,11 +90,8 @@ const Favorites: React.FC = () => {
               >
                 <Link to={`/house/${house._id}`}>
                   <div className="h-48 overflow-hidden bg-gray-200 dark:bg-slate-700">
-                    <img
-                      src={
-                        house.images?.[0]?.url ||
-                        'https://images.unsplash.com/photo-1560518883-ce09059eeffa'
-                      }
+                    <MediaImage
+                      src={house.images?.[0]?.url}
                       alt={house.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -102,7 +100,7 @@ const Favorites: React.FC = () => {
                     <h4 className="font-semibold text-lg line-clamp-1 text-brandNavy dark:text-white">
                       {house.title}
                     </h4>
-                    <div className="flex items-center text-textSecondary text-sm mb-3">
+                    <div className="flex items-center text-textSecondary dark:text-slate-400 text-sm mb-3">
                       <MapPin className="h-3 w-3 mr-1 shrink-0" />
                       <span className="truncate">
                         {house.location?.area}, {house.location?.city}
@@ -117,7 +115,7 @@ const Favorites: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => removeFavorite(house._id)}
-                  className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-darksurface/90 hover:bg-white text-error rounded-full shadow-sm transition-colors"
+                  className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-darksurface/90 hover:bg-white dark:hover:bg-slate-700 text-error rounded-full shadow-sm transition-colors"
                   aria-label="Remove from saved"
                 >
                   <Trash2 className="h-5 w-5" />
