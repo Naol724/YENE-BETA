@@ -16,6 +16,8 @@ import DemoBanner from '../components/DemoBanner';
 import { DEMO_LISTINGS } from '../data/demoListings';
 import { POPULAR_CITY_CARDS } from '../data/popularCityCards';
 import { getRecentlyViewed } from '../utils/recentlyViewed';
+import { MediaImage } from '../components/MediaImage';
+import HowItWorks from '../components/HowItWorks';
 
 type ListingTab = 'all' | 'rent' | 'sale';
 
@@ -180,7 +182,7 @@ const Home: React.FC = () => {
             {POPULAR_CITY_CARDS.map((c) => (
               <Link
                 key={c.param}
-                to={`/search?city=${encodeURIComponent(c.param)}`}
+                to={`/listings?city=${encodeURIComponent(c.param)}`}
                 className="px-3 sm:px-4 py-2 rounded-full bg-surface dark:bg-darksurface border border-border dark:border-slate-600 text-xs sm:text-sm font-medium text-brandNavy dark:text-slate-200 hover:border-brandTeal hover:text-brandTeal transition-colors shadow-sm"
               >
                 {c.name}
@@ -191,11 +193,11 @@ const Home: React.FC = () => {
             {POPULAR_CITY_CARDS.map((c) => (
               <Link
                 key={`card-${c.param}`}
-                to={`/search?city=${encodeURIComponent(c.param)}`}
+                to={`/listings?city=${encodeURIComponent(c.param)}`}
                 className="group rounded-2xl border border-border dark:border-slate-600 bg-white dark:bg-darksurface overflow-hidden shadow-md hover:shadow-xl hover:border-brandTeal/50 transition-all text-left flex flex-col"
               >
                 <div className="relative aspect-[16/10] overflow-hidden">
-                  <img
+                  <MediaImage
                     src={c.image}
                     alt={`${c.name} — ${c.tagline}`}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -305,7 +307,7 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pb-4 items-stretch">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5 lg:gap-6 pb-2 items-stretch">
             {loading ? (
               <>
                 {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -342,11 +344,8 @@ const Home: React.FC = () => {
                   className="flex-shrink-0 w-36 sm:w-44 rounded-xl overflow-hidden border border-border dark:border-slate-600 bg-white dark:bg-darksurface shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-700">
-                    <img
-                      src={
-                        item.image ||
-                        'https://images.unsplash.com/photo-1560518883-ce09059eeffa'
-                      }
+                    <MediaImage
+                      src={item.image}
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -358,14 +357,16 @@ const Home: React.FC = () => {
           </section>
         )}
 
-        <section className="mt-12 sm:mt-16 pt-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-brandNavy text-center">Ads</h2>
-          <div className="mx-auto mt-3 h-1 w-12 bg-brandNavy rounded-full" />
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
+        <section className="mt-10 sm:mt-14 pt-2 sm:pt-4 px-1">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-brandNavy dark:text-white text-center">
+            Ads
+          </h2>
+          <div className="mx-auto mt-2 sm:mt-3 h-1 w-10 sm:w-12 bg-brandNavy dark:bg-brandTeal rounded-full" />
+          <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-4xl mx-auto">
             {adImages.map((src, i) => (
               <div
                 key={src}
-                className={`relative rounded-xl overflow-hidden shadow-md aspect-[4/3] group cursor-pointer border border-border/80 ${
+                className={`relative rounded-xl overflow-hidden shadow-md aspect-[16/10] sm:aspect-[4/3] group cursor-pointer border border-border/80 dark:border-slate-600 ${
                   adSlide !== i ? 'sm:opacity-90' : ''
                 }`}
                 onClick={() => setAdSlide(i)}
@@ -375,28 +376,36 @@ const Home: React.FC = () => {
                 role="button"
                 tabIndex={0}
               >
-                <img src={src} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <MediaImage
+                  src={src}
+                  alt=""
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <span className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-brandNavy shadow">
+                <span className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-slate-900/90 px-2 py-1 text-[11px] sm:text-xs font-semibold text-brandNavy dark:text-white shadow">
                   <Search className="h-3.5 w-3.5" />
                   {120 + i * 35}
                 </span>
                 {i === 1 && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="btn-teal text-xs sm:text-sm shadow-lg">View property</span>
+                  <div className="absolute inset-0 flex items-center justify-center p-3">
+                    <span className="btn-teal text-xs sm:text-sm shadow-lg !h-9 sm:!h-10 px-4">
+                      View property
+                    </span>
                   </div>
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-center gap-2 mt-4">
+          <div className="flex justify-center gap-2 mt-3 sm:mt-4">
             {adImages.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setAdSlide(i)}
                 className={`h-2 w-2 rounded-full transition-colors ${
-                  adSlide === i ? 'bg-brandNavy' : 'bg-border ring-1 ring-brandNavy/20'
+                  adSlide === i
+                    ? 'bg-brandNavy dark:bg-brandTeal'
+                    : 'bg-border dark:bg-slate-600 ring-1 ring-brandNavy/20 dark:ring-slate-500'
                 }`}
                 aria-label={`Ad slide ${i + 1}`}
               />
@@ -404,38 +413,97 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        <section className="mt-20 pb-4">
-          <div className="flex justify-center mb-10">
+        <HowItWorks />
+
+        <section id="faq" className="scroll-mt-24 sm:scroll-mt-28 mt-12 sm:mt-16 px-1 pb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brandNavy dark:text-white text-center">
+            FAQs
+          </h2>
+          <div className="mx-auto mt-2 sm:mt-3 h-1 w-12 sm:w-14 bg-brandNavy dark:bg-brandTeal rounded-full" />
+          <div className="mt-6 sm:mt-8 max-w-3xl mx-auto space-y-3 sm:space-y-4">
+            {[
+              {
+                q: 'Do I need an account to browse?',
+                a: 'No. Guests can search by city and open listing details. Create a renter account to save favorites and message owners.',
+              },
+              {
+                q: 'How do renters contact an owner?',
+                a: 'Open a listing → Contact / Message host. Conversations continue under Messages. You must be signed in as a renter.',
+              },
+              {
+                q: 'How do owners publish a home?',
+                a: 'Register as an owner, open the Owner dashboard, then Post a listing with photos, price, and location. Renters can message you about it.',
+              },
+              {
+                q: 'What can admins do?',
+                a: 'Admin accounts open the Admin dashboard to review users, approvals, and listings across the marketplace.',
+              },
+            ].map(({ q, a }) => (
+              <details
+                key={q}
+                className="group rounded-xl border border-border dark:border-slate-600 bg-white dark:bg-darksurface px-4 py-3 open:shadow-sm"
+              >
+                <summary className="cursor-pointer list-none font-semibold text-sm sm:text-base text-brandNavy dark:text-white flex items-center justify-between gap-3">
+                  {q}
+                  <span className="text-brandTeal text-lg leading-none group-open:rotate-45 transition-transform" aria-hidden>
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2 text-xs sm:text-sm text-textSecondary dark:text-slate-300 leading-relaxed pr-6">
+                  {a}
+                </p>
+              </details>
+            ))}
+          </div>
+          <p className="mt-5 text-center text-xs sm:text-sm text-textSecondary dark:text-slate-400">
+            Full step-by-step guides:{' '}
+            <a href="/#how-it-works" className="text-brandTeal font-medium hover:underline">
+              How it works
+            </a>
+          </p>
+        </section>
+
+        <section className="mt-12 sm:mt-16 pb-2 sm:pb-4">
+          <div className="flex justify-center mb-6 sm:mb-10 px-2">
             <Link
-              to="/search"
-              className="rounded-full bg-brandNavy text-white text-sm font-semibold px-10 py-2.5 hover:bg-black transition-colors"
+              to="/listings"
+              className="w-full sm:w-auto max-w-xs text-center rounded-full bg-brandNavy dark:bg-brandTeal text-white text-sm font-semibold px-8 sm:px-10 py-2.5 sm:py-3 hover:bg-black dark:hover:bg-brandTealDark transition-colors"
             >
               More ads
             </Link>
           </div>
-          <h2 className="text-3xl font-bold text-brandNavy text-center">Features</h2>
-          <div className="mx-auto mt-3 h-1 w-14 bg-brandNavy rounded-full" />
-          <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-12 max-w-4xl mx-auto">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brandNavy dark:text-white text-center px-2">
+            Features
+          </h2>
+          <div className="mx-auto mt-2 sm:mt-3 h-1 w-12 sm:w-14 bg-brandNavy dark:bg-brandTeal rounded-full" />
+          <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-x-8 sm:gap-y-10 max-w-4xl mx-auto">
             {FEATURES.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="text-center sm:text-left">
-                <div className="inline-flex p-3 rounded-full bg-brandNavy/5 text-brandNavy mb-4">
-                  <Icon className="h-6 w-6" />
+              <div
+                key={title}
+                className="text-center sm:text-left rounded-xl sm:rounded-none border border-border/60 dark:border-slate-700/80 sm:border-0 bg-white/60 dark:bg-darksurface/60 sm:bg-transparent p-4 sm:p-0"
+              >
+                <div className="inline-flex p-2.5 sm:p-3 rounded-full bg-brandTeal/15 dark:bg-brandTeal/20 text-brandTeal mb-3 sm:mb-4">
+                  <Icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden />
                 </div>
-                <h3 className="font-bold text-lg text-brandNavy">{title}</h3>
-                <p className="mt-2 text-sm text-textSecondary leading-relaxed">{text}</p>
+                <h3 className="font-bold text-base sm:text-lg text-brandNavy dark:text-white">{title}</h3>
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-textSecondary dark:text-slate-300 leading-relaxed">
+                  {text}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-20 mb-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-brandNavy text-center">Our partners</h2>
-          <div className="mx-auto mt-3 h-1 w-16 bg-brandNavy rounded-full" />
-          <div className="mt-10 flex flex-wrap justify-center gap-10 md:gap-16 items-center opacity-90">
-            <div className="h-16 px-8 rounded-lg border-2 border-emerald-600/40 bg-emerald-50 flex items-center justify-center text-emerald-800 font-bold text-sm tracking-wide">
+        <section className="mt-12 sm:mt-16 mb-4 px-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-brandNavy dark:text-white text-center">
+            Our partners
+          </h2>
+          <div className="mx-auto mt-2 sm:mt-3 h-1 w-12 sm:w-16 bg-brandNavy dark:bg-brandTeal rounded-full" />
+          <div className="mt-6 sm:mt-10 flex flex-wrap justify-center gap-4 sm:gap-10 md:gap-16 items-center">
+            <div className="h-12 sm:h-16 px-5 sm:px-8 rounded-lg border-2 border-emerald-600/40 dark:border-emerald-500/40 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-800 dark:text-emerald-200 font-bold text-xs sm:text-sm tracking-wide">
               Partner Realty
             </div>
-            <div className="h-16 px-8 rounded-lg border-2 border-blue-600/40 bg-blue-50 flex items-center justify-center text-blue-900 font-bold text-sm tracking-wide">
+            <div className="h-12 sm:h-16 px-5 sm:px-8 rounded-lg border-2 border-blue-600/40 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-900 dark:text-blue-200 font-bold text-xs sm:text-sm tracking-wide">
               Metro Homes
             </div>
           </div>
