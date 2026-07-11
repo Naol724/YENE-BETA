@@ -8,15 +8,24 @@ export type RegisterPayload = {
   role: 'RENTER' | 'OWNER';
 };
 
+export type AuthResponse = {
+  success: boolean;
+  token: string;
+  refreshToken?: string;
+  user: unknown;
+  message?: string;
+  code?: string;
+};
+
 export async function loginRequest(email: string, password: string) {
-  return api.post<{ success: boolean; token: string; user: unknown; message?: string }>('/auth/login', {
+  return api.post<AuthResponse>('/auth/login', {
     email,
     password,
   });
 }
 
 export async function registerRequest(payload: RegisterPayload) {
-  return api.post<{ success: boolean; token: string; user: unknown; message?: string }>('/auth/register', payload);
+  return api.post<AuthResponse>('/auth/register', payload);
 }
 
 export async function forgotPasswordRequest(email: string) {
@@ -25,4 +34,13 @@ export async function forgotPasswordRequest(email: string) {
 
 export async function verifyEmailRequest(email: string, otp: string) {
   return api.post<{ success: boolean; message?: string }>('/auth/verify-email', { email, otp });
+}
+
+export async function resendVerificationRequest(email: string) {
+  return api.post<{
+    success: boolean;
+    message?: string;
+    alreadyVerified?: boolean;
+    emailDelivery?: boolean;
+  }>('/auth/resend-verification', { email });
 }
