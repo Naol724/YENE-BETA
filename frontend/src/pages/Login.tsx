@@ -10,6 +10,7 @@ import { isValidEmail } from '../utils/validation';
 import { friendlyAuthError } from '../utils/friendlyAuthError';
 import { networkErrorHint, parseApiErrorMessage } from '../utils/parseApiError';
 import { Eye, EyeOff, Home, Loader2 } from 'lucide-react';
+import { LanguageSelect, useI18n } from '../context/I18nContext';
 
 function redirectAfterAuth(
   user: User,
@@ -28,6 +29,7 @@ const Login: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useI18n();
   const fromPath = getPostAuthRedirectPath(location.state);
 
   const [email, setEmail] = useState('');
@@ -40,11 +42,11 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError(null);
     if (!isValidEmail(email)) {
-      setError('Enter a valid email address.');
+      setError(t('login.invalidEmail'));
       return;
     }
     if (password.length < 1) {
-      setError('Enter your password.');
+      setError(t('login.enterPassword'));
       return;
     }
     setSubmitting(true);
@@ -52,18 +54,34 @@ const Login: React.FC = () => {
       const { data } = await loginRequest(email.trim(), password);
 
       if (!data.success || !data.token || !data.user) {
-        setError(friendlyAuthError(data.message ?? 'Could not sign in'));
+        setError(friendlyAuthError(data.message ?? t('login.failed')));
         return;
       }
 
       const user = normalizeApiUser(data.user as Parameters<typeof normalizeApiUser>[0]);
-      dispatch(login({ user, token: data.token }));
-      toast.success(`Welcome back, ${user.fullName.split(' ')[0]}!`);
+      dispatch(
+        login({
+          user,
+          token: data.token,
+          refreshToken: data.refreshToken ?? null,
+        })
+      );
+      toast.success(t('login.welcomeBack', { name: user.fullName.split(' ')[0] }));
       redirectAfterAuth(user, navigate, fromPath);
     } catch (err: unknown) {
       const fromBody = parseApiErrorMessage(err);
       if (fromBody) {
-        setError(friendlyAuthError(fromBody));
+        const friendly = friendlyAuthError(fromBody);
+        setError(friendly);
+        if (
+          typeof err === 'object' &&
+          err &&
+          'response' in err &&
+          (err as { response?: { data?: { code?: string }; status?: number } }).response?.data
+            ?.code === 'EMAIL_NOT_VERIFIED'
+        ) {
+          navigate('/verify-email', { state: { email: email.trim() } });
+        }
         return;
       }
       const net = networkErrorHint(err);
@@ -71,7 +89,7 @@ const Login: React.FC = () => {
         setError(net);
         return;
       }
-      setError('Something went wrong. Try again.');
+      setError(t('common.tryAgain'));
     } finally {
       setSubmitting(false);
     }
@@ -79,6 +97,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-10 animate-fade-in">
+      <div className="w-full max-w-md flex justify-end mb-4">
+        <LanguageSelect />
+      </div>
       <Link
         to="/"
         className="mb-8 text-2xl font-bold text-primary flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -88,8 +109,8 @@ const Login: React.FC = () => {
       </Link>
 
       <div className="w-full max-w-md card-container p-6 md:p-8 shadow-md">
-        <h1 className="text-2xl font-bold text-textPrimary mb-1">Welcome back</h1>
-        <p className="text-textSecondary text-sm mb-6">Sign in to continue</p>
+        <h1 className="text-2xl font-bold text-textPrimary mb-1">{t('login.title')}</h1>
+        <p className="text-textSecondary text-sm mb-6">{t('login.subtitle')}</p>
 
         {error && (
           <div
@@ -103,7 +124,7 @@ const Login: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="login-email" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Email
+              {t('common.email')}
             </label>
             <input
               id="login-email"
@@ -118,7 +139,7 @@ const Login: React.FC = () => {
           </div>
           <div>
             <label htmlFor="login-password" className="block text-sm font-medium text-textPrimary mb-1.5">
-              Password
+              {t('common.password')}
             </label>
             <div className="relative">
               <input
@@ -136,7 +157,7 @@ const Login: React.FC = () => {
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-textSecondary hover:text-textPrimary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('common.hidePassword') : t('common.showPassword')}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
               </button>
@@ -145,7 +166,7 @@ const Login: React.FC = () => {
 
           <div className="text-right">
             <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-              Forgot password?
+              {t('login.forgot')}
             </Link>
           </div>
 
@@ -153,18 +174,18 @@ const Login: React.FC = () => {
             {submitting ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Signing in…
+                {t('login.submitting')}
               </>
             ) : (
-              'Sign in'
+              t('login.submit')
             )}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-textSecondary">
-          No account yet?{' '}
+          {t('login.noAccount')}{' '}
           <Link to="/register" state={location.state} className="font-semibold text-primary hover:underline">
-            Create one
+            {t('login.createOne')}
           </Link>
         </p>
       </div>
