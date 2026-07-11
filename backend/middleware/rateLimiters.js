@@ -14,6 +14,30 @@ const authLimiter = rateLimit({
   },
 });
 
+/** Even stricter for password reset to prevent brute force */
+const passwordResetLimiter = rateLimit({
+  windowMs: WINDOW_MS,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many password reset attempts from this IP, please try again later.',
+  },
+});
+
+/** Stricter for image upload to prevent storage abuse */
+const uploadLimiter = rateLimit({
+  windowMs: WINDOW_MS,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many upload attempts from this IP, please try again later.',
+  },
+});
+
 /** Baseline limit for all /api traffic. */
 const apiLimiter = rateLimit({
   windowMs: WINDOW_MS,
@@ -26,4 +50,4 @@ const apiLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter };
+module.exports = { authLimiter, apiLimiter, passwordResetLimiter, uploadLimiter };
