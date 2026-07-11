@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { RootState } from '../store';
 import { logout } from '../store/authSlice';
 import { useTheme } from '../context/ThemeContext';
-import { useI18n } from '../context/I18nContext';
+import { useI18n, LanguageSelect } from '../context/I18nContext';
+import { useMessageNotifications } from '../context/MessageNotificationsContext';
 import {
   Home,
   LogOut,
@@ -16,25 +17,25 @@ import {
   Sun,
   Menu,
   X,
-  Globe,
 } from 'lucide-react';
-
-const NAV_LINKS = [
-  { to: '/', label: 'Home' },
-  { to: '/listings', label: 'Listings' },
-  { to: '/inquiries', label: 'Messages' },
-] as const;
 
 const Navbar: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const { unreadCount } = useMessageNotifications();
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const messagesPath = user?.role === 'OWNER' ? '/owner/inquiries' : '/inquiries';
+
+  const navLinks = [
+    { to: '/', label: t('nav.home') },
+    { to: '/listings', label: t('nav.listings') },
+    { to: messagesPath, label: t('nav.messages'), badge: isAuthenticated ? unreadCount : 0 },
+  ] as const;
 
   const handleLogout = () => {
     dispatch(logout());
@@ -62,38 +63,29 @@ const Navbar: React.FC = () => {
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:flex items-center gap-1 rounded-lg border border-border/60 bg-white/80 px-1">
-              <Globe className="h-3.5 w-3.5 text-textSecondary ml-1" aria-hidden />
-              <select
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as 'en' | 'am')}
-                className="bg-transparent text-xs font-medium text-brandNavy py-1 pr-6 rounded cursor-pointer outline-none"
-                aria-label="Language"
-              >
-                <option value="en">English</option>
-                <option value="am">አማርኛ (beta)</option>
-              </select>
+            <div className="hidden sm:block">
+              <LanguageSelect />
             </div>
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-1.5 rounded-lg hover:bg-white/50 text-brandNavy"
+              className="p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-slate-800 text-brandNavy dark:text-slate-200"
               aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
             {isAuthenticated ? (
-              <span className="hidden sm:block font-medium text-brandNavy truncate max-w-[100px]">
+              <span className="hidden sm:block font-medium text-brandNavy dark:text-slate-200 truncate max-w-[100px]">
                 {user?.fullName.split(' ')[0]}
               </span>
             ) : (
-              <div className="hidden sm:flex items-center gap-1">
+              <div className="hidden sm:flex items-center gap-1 text-brandNavy dark:text-slate-200">
                 <Link to="/login" className="hover:text-brandTeal font-medium text-sm">
-                  Login
+                  {t('nav.login')}
                 </Link>
-                <span className="text-border">|</span>
+                <span className="text-border dark:text-slate-600">|</span>
                 <Link to="/register" className="hover:text-brandTeal font-medium text-sm">
-                  Register
+                  {t('nav.register')}
                 </Link>
               </div>
             )}
@@ -101,41 +93,56 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Desktop: main nav */}
-      <header className="hidden md:flex fixed top-9 left-0 right-0 h-16 bg-white dark:bg-darksurface border-b border-border dark:border-slate-700 z-50 items-center justify-between shadow-sm transition-colors">
-        <div className="container-mobile flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 group">
-            <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-brandNavy flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+      {/* Desktop: main nav — 3-column grid keeps logo / links / actions evenly spaced */}
+      <header className="hidden md:flex fixed top-9 left-0 right-0 h-16 bg-white dark:bg-darksurface border-b border-border dark:border-slate-700 z-50 items-center shadow-sm transition-colors">
+        <div className="container-mobile w-full flex items-center justify-between gap-3 xl:gap-6">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
+            <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-brandNavy dark:bg-brandTeal flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform shrink-0">
               <Home className="h-4 w-4 sm:h-5 sm:w-5" />
             </span>
-            <span className="text-lg sm:text-xl font-bold tracking-tight text-brandNavy uppercase">YENE BET</span>
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-brandNavy dark:text-white uppercase truncate">
+              YENE BET
+            </span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-            {NAV_LINKS.map(({ to, label }) => {
+          <nav className="flex items-center justify-center gap-4 lg:gap-7 xl:gap-9 min-w-0 flex-1 px-2">
+            {navLinks.map(({ to, label, ...rest }) => {
+              const badge = 'badge' in rest ? rest.badge : 0;
+              const isMessages = to === messagesPath;
               const active =
                 location.pathname === to ||
                 (to !== '/' && location.pathname.startsWith(to)) ||
-                (to === '/listings' && location.pathname === '/search');
+                (to === '/listings' && location.pathname === '/search') ||
+                (isMessages &&
+                  (location.pathname.startsWith('/inquiries') ||
+                    location.pathname.startsWith('/owner/inquiries') ||
+                    location.pathname.startsWith('/chat')));
               return (
                 <Link
-                  key={to}
+                  key={`${to}-${label}`}
                   to={to}
-                  className={`text-sm font-semibold tracking-wide uppercase transition-colors ${
-                    active ? 'text-brandTeal' : 'text-brandNavy hover:text-brandTeal'
+                  className={`relative shrink-0 whitespace-nowrap text-sm font-semibold tracking-wide uppercase transition-colors ${
+                    active
+                      ? 'text-brandTeal'
+                      : 'text-brandNavy dark:text-slate-100 hover:text-brandTeal'
                   }`}
                 >
                   {label}
+                  {badge > 0 && (
+                    <span className="absolute -top-2 -right-4 min-w-[1.1rem] h-4 px-1 rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 type="button"
                 onClick={() => setMoreOpen((o) => !o)}
-                className="flex items-center gap-1 text-sm font-semibold tracking-wide uppercase text-brandNavy hover:text-brandTeal"
+                className="flex items-center gap-1 text-sm font-semibold tracking-wide uppercase text-brandNavy dark:text-slate-100 hover:text-brandTeal"
               >
-                More
+                {t('nav.more')}
                 <ChevronDown className={`h-4 w-4 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
               </button>
               {moreOpen && (
@@ -146,11 +153,11 @@ const Navbar: React.FC = () => {
                     aria-label="Close menu"
                     onClick={() => setMoreOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-border py-2 z-50 text-sm font-medium">
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-48 bg-white dark:bg-darksurface rounded-lg shadow-lg border border-border dark:border-slate-600 py-2 z-50 text-sm font-medium text-brandNavy dark:text-slate-100">
                     {isAuthenticated && (
                       <Link
                         to="/favorites"
-                        className="block px-4 py-2 hover:bg-surface"
+                        className="block px-4 py-2 hover:bg-surface dark:hover:bg-slate-700"
                         onClick={() => setMoreOpen(false)}
                       >
                         Saved
@@ -158,7 +165,7 @@ const Navbar: React.FC = () => {
                     )}
                     <Link
                       to="/search"
-                      className="block px-4 py-2 hover:bg-surface"
+                      className="block px-4 py-2 hover:bg-surface dark:hover:bg-slate-700"
                       onClick={() => setMoreOpen(false)}
                     >
                       Advanced search
@@ -169,29 +176,40 @@ const Navbar: React.FC = () => {
             </div>
           </nav>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0">
             {isAuthenticated ? (
-              <div className="flex items-center gap-2 sm:gap-4">
-                <span className="hidden lg:block font-semibold text-textPrimary truncate max-w-[120px]">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="hidden xl:block font-semibold text-brandNavy dark:text-slate-100 truncate max-w-[120px]">
                   Hi, {user?.fullName?.split(' ')[0]}
                 </span>
                 {user?.role === 'OWNER' && (
-                  <Link to="/owner" className="text-sm font-semibold text-brandNavy hover:text-brandTeal hidden md:block">
-                    Dashboard
+                  <Link
+                    to="/owner"
+                    className="text-sm font-semibold text-brandNavy dark:text-slate-100 hover:text-brandTeal hidden lg:block"
+                  >
+                    {t('nav.dashboard')}
+                  </Link>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    to="/admin"
+                    className="text-sm font-semibold text-brandNavy dark:text-slate-100 hover:text-brandTeal hidden lg:block"
+                  >
+                    Admin
                   </Link>
                 )}
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="p-2 text-error hover:bg-red-50 rounded-lg transition-colors"
-                  aria-label="Log out"
+                  className="p-2 text-error hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                  aria-label={t('nav.logout')}
                 >
                   <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
             ) : null}
-            <Link to={postHref} className="btn-primary h-10 sm:h-11 px-4 sm:px-6 text-xs">
-              Post
+            <Link to={postHref} className="btn-primary h-10 sm:h-11 px-4 sm:px-6 text-xs shrink-0">
+              {t('nav.post')}
             </Link>
           </div>
         </div>
@@ -243,7 +261,9 @@ const Navbar: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6 sm:mb-8">
-                <span className="font-bold text-brandNavy dark:text-white uppercase text-sm sm:text-base">Menu</span>
+                <span className="font-bold text-brandNavy dark:text-white uppercase text-sm sm:text-base">
+                  {t('nav.menu')}
+                </span>
                 <button
                   type="button"
                   onClick={() => setMobileNavOpen(false)}
@@ -255,14 +275,19 @@ const Navbar: React.FC = () => {
               </div>
               <div className="flex flex-col gap-1">
                 {[
-                  { to: '/', label: 'Home' },
-                  { to: '/listings', label: 'Listings' },
-                  { to: messagesPath, label: 'Messages' },
+                  { to: '/', label: t('nav.home') },
+                  { to: '/listings', label: t('nav.listings') },
+                  { to: messagesPath, label: t('nav.messages'), badge: isAuthenticated ? unreadCount : 0 },
                   ...(isAuthenticated
                     ? [
-                        { to: '/favorites', label: 'Saved' },
-                        { to: '/dashboard', label: 'Dashboard' },
-                        ...(user?.role === 'OWNER' ? [{ to: '/owner/listings/new', label: 'Post property' }] : []),
+                        { to: '/favorites', label: t('nav.saved'), badge: 0 },
+                        { to: '/dashboard', label: t('nav.dashboard'), badge: 0 },
+                        ...(user?.role === 'OWNER'
+                          ? [{ to: '/owner/listings/new', label: t('nav.post'), badge: 0 }]
+                          : []),
+                        ...(user?.role === 'ADMIN'
+                          ? [{ to: '/admin', label: 'Admin Dashboard', badge: 0 }]
+                          : []),
                       ]
                     : []),
                 ].map((item) => (
@@ -270,9 +295,14 @@ const Navbar: React.FC = () => {
                     key={item.to + item.label}
                     to={item.to}
                     onClick={() => setMobileNavOpen(false)}
-                    className="py-3 px-2 sm:py-3 sm:px-3 rounded-lg font-medium text-brandNavy dark:text-slate-100 hover:bg-surface dark:hover:bg-slate-700 text-sm sm:text-base"
+                    className="py-3 px-2 sm:py-3 sm:px-3 rounded-lg font-medium text-brandNavy dark:text-slate-100 hover:bg-surface dark:hover:bg-slate-700 text-sm sm:text-base flex items-center justify-between gap-2"
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    {item.badge > 0 && (
+                      <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-error text-white text-[11px] font-bold flex items-center justify-center">
+                        {item.badge > 9 ? '9+' : item.badge}
+                      </span>
+                    )}
                   </Link>
                 ))}
                 {!isAuthenticated ? (
@@ -282,14 +312,14 @@ const Navbar: React.FC = () => {
                       onClick={() => setMobileNavOpen(false)}
                       className="mt-4 sm:mt-6 btn-primary text-center py-3 sm:py-4 text-sm"
                     >
-                      Login
+                      {t('nav.login')}
                     </Link>
                     <Link
                       to="/register"
                       onClick={() => setMobileNavOpen(false)}
                       className="mt-2 sm:mt-3 btn-teal text-center py-3 sm:py-4 text-sm"
                     >
-                      Register
+                      {t('nav.register')}
                     </Link>
                   </>
                 ) : (
@@ -301,20 +331,12 @@ const Navbar: React.FC = () => {
                     }}
                     className="mt-4 sm:mt-6 flex items-center justify-center gap-2 text-error py-3 text-sm sm:text-base"
                   >
-                    <LogOut className="h-4 w-4 sm:h-5 sm:w-5" /> Log out
+                    <LogOut className="h-4 w-4 sm:h-5 sm:w-5" /> {t('nav.logout')}
                   </button>
                 )}
               </div>
-              <div className="mt-auto pt-6 sm:pt-8 border-t border-border dark:border-slate-600 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-textSecondary" />
-                <select
-                  value={locale}
-                  onChange={(e) => setLocale(e.target.value as 'en' | 'am')}
-                  className="flex-1 bg-transparent text-sm font-medium border border-border dark:border-slate-600 rounded-lg px-2 py-2"
-                >
-                  <option value="en">English</option>
-                  <option value="am">አማርኛ</option>
-                </select>
+              <div className="mt-auto pt-6 sm:pt-8 border-t border-border dark:border-slate-600">
+                <LanguageSelect className="w-full [&_select]:w-full [&_select]:border [&_select]:border-border [&_select]:dark:border-slate-600 [&_select]:rounded-lg [&_select]:px-2 [&_select]:py-2" />
               </div>
             </motion.nav>
           </motion.div>
