@@ -34,12 +34,12 @@ export const FilterSidebar: React.FC<Props> = ({
 }) => (
   <div className="space-y-6 lg:space-y-4">
     {showClose ? (
-      <div className="flex justify-between items-center mb-2 md:hidden">
+      <div className="flex justify-between items-center mb-2 lg:hidden">
         <h3 className="font-bold text-lg text-brandNavy dark:text-white">Filters</h3>
         <button
           type="button"
           onClick={onClose}
-          className="text-error text-sm font-medium"
+          className="text-error text-sm font-medium px-2 py-1"
         >
           Close
         </button>
