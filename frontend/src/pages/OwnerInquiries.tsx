@@ -82,9 +82,9 @@ const OwnerInquiries: React.FC = () => {
     <div className="animate-fade-in max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[28px] font-bold">Inquiries</h1>
+          <h1 className="text-2xl sm:text-[28px] font-bold text-textPrimary dark:text-white">Inquiries</h1>
           {unread > 0 && (
-            <p className="text-sm text-textSecondary mt-1">
+            <p className="text-sm text-textSecondary dark:text-slate-400 mt-1">
               <span className="inline-flex items-center justify-center min-w-[22px] h-6 px-2 rounded-full bg-error text-white text-xs font-bold mr-2">
                 {unread}
               </span>
@@ -148,8 +148,8 @@ const OwnerInquiries: React.FC = () => {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 rounded-2xl border border-dashed border-border bg-surface">
-          <p className="text-textPrimary font-medium mb-1">No inquiries yet</p>
+        <div className="text-center py-16 rounded-2xl border border-dashed border-border dark:border-slate-600 bg-surface dark:bg-darksurface">
+          <p className="text-textPrimary dark:text-white font-medium mb-1">No inquiries yet</p>
           <p className="text-textSecondary text-sm">When renters contact you, they&apos;ll appear here.</p>
         </div>
       ) : (
@@ -158,15 +158,15 @@ const OwnerInquiries: React.FC = () => {
             <li key={inq._id}>
               <Link
                 to={`/owner/inquiries/${inq._id}`}
-                className="block p-4 rounded-xl border border-border bg-white hover:border-primary/40 hover:shadow-md transition-all"
+                className="block p-4 rounded-xl border border-border dark:border-slate-700 bg-white dark:bg-darksurface hover:border-primary/40 dark:hover:border-brandTeal/40 hover:shadow-md transition-all"
               >
                 <div className="flex gap-3">
-                  <div className="h-12 w-12 rounded-full bg-surface border border-border flex items-center justify-center font-bold text-textSecondary shrink-0">
+                  <div className="h-12 w-12 rounded-full bg-surface dark:bg-slate-800 border border-border dark:border-slate-600 flex items-center justify-center font-bold text-textSecondary dark:text-slate-300 shrink-0">
                     {(inq.renter?.fullName ?? '?')[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between gap-2">
-                      <p className="font-semibold text-textPrimary">{inq.renter?.fullName ?? 'Renter'}</p>
+                      <p className="font-semibold text-textPrimary dark:text-slate-100">{inq.renter?.fullName ?? 'Renter'}</p>
                       <span className="text-xs text-textSecondary shrink-0">{formatTimeAgo(inq.createdAt)}</span>
                     </div>
                     <p className="text-sm text-primary font-medium truncate">{inq.property?.title ?? 'Property'}</p>
