@@ -26,7 +26,7 @@ A progressive web app for browsing rental listings, saving favorites, messaging 
 
 - **Node.js** 18+ (LTS recommended)
 - **npm**
-- A **MongoDB** instance — [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier works well for development
+- A **MongoDB** instance — [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) free tier works well for development 
 
 ## Project layout
 
@@ -123,10 +123,37 @@ GET http://localhost:5000/api/health
 
 (Use your real host/port in production.) Returns JSON including database connection state (`ok` may be false until MongoDB is connected).
 
+## How it works (all actors)
+
+### Guest (not signed in)
+1. Browse **Home** and **Listings**; search or tap a **Popular city**.
+2. Open **View details** for photos, price, and amenities.
+3. Register when ready — choose **renter** or **owner**.
+
+### Renter
+1. Register with “I’m looking for a place” → verify email if prompted → sign in.
+2. Search/filter by city, price, bedrooms; open listing details.
+3. **Save** favorites (heart) and find them under **Saved**.
+4. **Contact / Message** owners; continue the thread under **Messages**.
+
+### Owner
+1. Register with “I’m listing my property” → land on **Owner dashboard**.
+2. **Post** a listing (wizard): location, price, uploaded photos → publish.
+3. Answer renters under **Owner → Inquiries** / Messages.
+4. Edit/pause listings, check **Analytics**, upgrade to **Premium** for more slots.
+
+### Admin
+1. Sign in with an **ADMIN** account (Admin link in the nav).
+2. Manage users (renters/owners), review approval, and inspect listings.
+3. Use the admin dashboard for marketplace oversight.
+
+On the live app, open **Home → How it works** (or footer **How it works**) for the same guides with tabs.
+
 ## Features (high level)
 
 - **Renters:** search listings, favorites, inquiries/messages, email verification flow (OTP surfaced in API logs when SMTP is not configured).
 - **Owners:** dashboard, listings wizard, inquiries, premium hooks, analytics, profile — routes under `/owner` with a dedicated layout.
+- **Admins:** user and property moderation via `/admin`.
 - **Auth:** register, login, JWT-protected routes, optional forgot/reset password when email env vars are set.
 
 More detail: [API_DOCS.md](API_DOCS.md), [UI_FLOW.md](UI_FLOW.md).
