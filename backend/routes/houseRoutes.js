@@ -9,7 +9,7 @@ const {
   getMyListings 
 } = require('../controllers/houseController');
 
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, optionalProtect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.route('/')
   .post(protect, authorize('OWNER'), createHouse);
 
 router.route('/:id')
-  .get(getHouse)
+  .get(optionalProtect, getHouse)
   .put(protect, authorize('OWNER'), updateHouse)
   .delete(protect, authorize('OWNER'), deleteHouse);
 
