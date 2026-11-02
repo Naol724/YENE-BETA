@@ -4,7 +4,7 @@
   "description": "Backend API for YENE BET PWA",
   "main": "server.js",
   "scripts": {
-    "start": "node --use-system-ca server.js",
+    "start": "node server.js",
     "dev": "nodemon --exec \"node --use-system-ca\" server.js",
     "dev:5001": "cross-env PORT=5001 nodemon --exec \"node --use-system-ca\" server.js",
     "dev:5002": "cross-env PORT=5002 nodemon --exec \"node --use-system-ca\" server.js",

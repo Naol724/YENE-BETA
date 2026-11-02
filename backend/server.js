@@ -3,10 +3,14 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 /**
- * Google Public DNS by default so Atlas SRV (_mongodb._tcp…) resolves reliably on many Windows setups.
- * Set MONGODB_USE_PUBLIC_DNS=false to use only the system resolver.
+ * Google Public DNS helps Atlas SRV on some Windows networks.
+ * Production (Render/etc.): use system DNS unless MONGODB_USE_PUBLIC_DNS=true (custom resolvers are often blocked).
+ * Local: use 8.8.8.8 unless MONGODB_USE_PUBLIC_DNS=false.
  */
-if (process.env.MONGODB_USE_PUBLIC_DNS !== 'false') {
+const usePublicDns =
+  process.env.MONGODB_USE_PUBLIC_DNS === 'true' ||
+  (process.env.NODE_ENV !== 'production' && process.env.MONGODB_USE_PUBLIC_DNS !== 'false');
+if (usePublicDns) {
   try {
     require('dns').setServers(['8.8.8.8', '8.8.4.4']);
     console.log('[mongo] DNS: 8.8.8.8 / 8.8.4.4 (set MONGODB_USE_PUBLIC_DNS=false for system DNS only)');
@@ -14,7 +18,7 @@ if (process.env.MONGODB_USE_PUBLIC_DNS !== 'false') {
     /* ignore */
   }
 } else {
-  console.log('[mongo] DNS: system default (MONGODB_USE_PUBLIC_DNS=false)');
+  console.log('[mongo] DNS: system default');
 }
 
 const dns = require('dns');
@@ -100,15 +104,17 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   const dbOk = mongoose.connection.readyState === 1;
   const payload = {
-    ok: dbOk,
+    ok: true,
+    ready: dbOk,
     port: Number(process.env.PORT) || 5000,
     database: dbOk ? 'connected' : 'disconnected',
     mongoState: mongoose.connection.readyState,
   };
-  if (process.env.NODE_ENV !== 'production' && !dbOk && lastMongoConnectError) {
+  if (!dbOk && lastMongoConnectError) {
     payload.lastError = lastMongoConnectError;
   }
-  res.status(dbOk ? 200 : 503).json(payload);
+  // Always 200 so host health checks (Render) do not kill the process while Mongo is still connecting.
+  res.status(200).json(payload);
 });
 
 const { resolveMongoUri, hasMongoConfiguration } = require('./utils/resolveMongoUri');
@@ -146,42 +152,54 @@ function findAvailablePort(startPort) {
 // Function to start server with dynamic port
 async function startServer() {
   try {
-    // Try to find an available port starting from currentPort
+    // Hosts like Render inject PORT and require binding exactly that port.
+    if (process.env.NODE_ENV === 'production') {
+      const prodPort = parseInt(process.env.PORT, 10) || DEFAULT_PORT;
+      currentPort = prodPort;
+      httpServer.listen(prodPort, '0.0.0.0', () => {
+        console.log(`\n🚀 Server running successfully on port ${prodPort}`);
+        console.log(`🌐 CORS origin: ${frontendOrigin}`);
+        console.log(`💬 Real-time inquiry updates enabled`);
+        console.log(`📊 Health check: /api/health`);
+        console.log('');
+      });
+      return;
+    }
+
+    // Local: try preferred port, then nearby ports if busy
     let availablePort = await findAvailablePort(currentPort);
-    
+
     if (!availablePort) {
-      // Try consecutive ports
       for (let i = 1; i < MAX_PORT_ATTEMPTS; i++) {
-        availablePort = await findAvailablePort(DEFAULT_PORT + i);
+        availablePort = await findAvailablePort(currentPort + i);
         if (availablePort) {
           currentPort = availablePort;
           break;
         }
       }
     }
-    
+
     if (!availablePort) {
-      console.error(`\n[api] ERROR: Could not find an available port from ${currentPort} to ${DEFAULT_PORT + MAX_PORT_ATTEMPTS - 1}`);
+      console.error(
+        `\n[api] ERROR: Could not find an available port from ${currentPort} to ${currentPort + MAX_PORT_ATTEMPTS - 1}`
+      );
       console.error('[api] Please manually stop other Node.js processes or choose a different port range');
       process.exit(1);
     }
-    
-    // Start the server on the available port
+
     httpServer.listen(availablePort, () => {
       const actualPort = availablePort;
       console.log(`\n🚀 Server running successfully on port ${actualPort}`);
       console.log(`🌐 CORS origin: ${frontendOrigin}`);
       console.log(`💬 Real-time inquiry updates enabled`);
       console.log(`📊 Health check: http://localhost:${actualPort}/api/health`);
-      
-      // Show port warning if different from expected
-      if (actualPort !== (parseInt(process.env.PORT) || DEFAULT_PORT)) {
+
+      if (actualPort !== (parseInt(process.env.PORT, 10) || DEFAULT_PORT)) {
         console.log(`\n⚠️  Port ${process.env.PORT || DEFAULT_PORT} was busy, using port ${actualPort} instead`);
         console.log(`📝 Update frontend/.env: VITE_API_URL=http://localhost:${actualPort}/api`);
       }
       console.log('');
     });
-    
   } catch (error) {
     console.error('\n[api] ERROR: Failed to start server:', error.message);
     process.exit(1);
