@@ -15,6 +15,13 @@
   .safe-pb {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
+  /* Dark mode: textPrimary/textSecondary stay navy/gray unless overridden */
+  .dark .text-textPrimary {
+    color: #f1f5f9;
+  }
+  .dark .text-textSecondary {
+    color: #94a3b8;
+  }
 }
 
 @layer base {

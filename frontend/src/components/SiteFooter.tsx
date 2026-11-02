@@ -247,8 +247,8 @@ const SiteFooter: React.FC = () => {
               </li>
               <li className="flex items-center gap-2 min-w-0">
                 <Phone className="h-4 w-4 shrink-0 text-brandTeal" />
-                <a href="tel:+251911000000" className="hover:text-brandTeal transition-colors truncate">
-                  +251 911 000 000
+                <a href="tel:+251913678845" className="hover:text-brandTeal transition-colors truncate">
+                  +251 913678845
                 </a>
               </li>
               <li className="flex items-center gap-2 min-w-0">

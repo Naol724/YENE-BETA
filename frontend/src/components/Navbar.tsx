@@ -58,8 +58,8 @@ const Navbar: React.FC = () => {
             </a>
             <span className="hidden sm:flex items-center gap-1.5">
               <Phone className="h-3.5 w-3.5" />
-              <span className="hidden lg:block">+251 911 000 000</span>
-              <span className="lg:hidden">+251 911 000 000</span>
+              <span className="hidden lg:block">+251 913678845</span>
+              <span className="lg:hidden">+251 913678845</span>
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">

@@ -228,7 +228,7 @@ const Register: React.FC = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="input-field"
-              placeholder="+251 7 …"
+              placeholder="+251 913678845"
             />
           </div>
 
