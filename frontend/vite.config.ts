@@ -51,20 +51,13 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           runtimeCaching: [
             {
+              // Never cache API (auth/login especially). Free Render cold starts can exceed 5s.
               urlPattern: /^https?:\/\/localhost:\d+\/api\/.*/i,
               handler: 'NetworkOnly',
             },
             {
               urlPattern: apiOriginPattern,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-v1',
-                expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
-                },
-                networkTimeoutSeconds: 5
-              }
+              handler: 'NetworkOnly',
             },
             {
               urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/i,

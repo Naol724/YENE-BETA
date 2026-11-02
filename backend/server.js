@@ -44,14 +44,45 @@ const { requireMongo } = require('./middleware/requireMongo');
 
 const app = express();
 
-const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+function normalizeOrigin(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/\/+$/, '');
+}
+
+const frontendOrigin = normalizeOrigin(process.env.FRONTEND_URL || 'http://localhost:5173');
+
+/** Allow primary SPA origin plus optional comma-separated FRONTEND_URLS. */
+function buildAllowedOrigins() {
+  const set = new Set([frontendOrigin].filter(Boolean));
+  const extra = process.env.FRONTEND_URLS || '';
+  for (const part of extra.split(',')) {
+    const o = normalizeOrigin(part);
+    if (o) set.add(o);
+  }
+  return set;
+}
+
+const allowedOrigins = buildAllowedOrigins();
 
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
 // Middleware
-app.use(cors({ origin: frontendOrigin, credentials: true }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Non-browser clients (curl, health checks) send no Origin
+      if (!origin) return callback(null, true);
+      const normalized = normalizeOrigin(origin);
+      if (allowedOrigins.has(normalized)) return callback(null, true);
+      console.warn(`[cors] Blocked origin: ${origin}`);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+  })
+);
 // Allow the SPA (different origin/port) to display images from this API.
 app.use(
   helmet({
@@ -281,7 +312,7 @@ const { Server } = require('socket.io');
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
-  cors: { origin: frontendOrigin, credentials: true },
+  cors: { origin: [...allowedOrigins], credentials: true },
 });
 
 io.use(async (socket, next) => {
