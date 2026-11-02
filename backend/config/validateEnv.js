@@ -11,11 +11,51 @@ const FORBIDDEN_JWT_SECRETS = new Set([
   'your_refresh_secret_change_in_production_2024',
 ]);
 
+/** Common misnamed keys people paste into Render instead of MONGODB_URI. */
+const MONGO_URI_ALIASES = ['MONGO_URI', 'MONGODB_URL', 'MONGO_URL', 'DATABASE_URL', 'DB_URI'];
+
+function isSet(name) {
+  const v = process.env[name];
+  return Boolean(v && String(v).trim());
+}
+
+/** Map common alias env names onto MONGODB_URI before the rest of the app reads it. */
+function normalizeMongoEnvAliases() {
+  if (isSet('MONGODB_URI')) return;
+  for (const alias of MONGO_URI_ALIASES) {
+    if (isSet(alias)) {
+      process.env.MONGODB_URI = String(process.env[alias]).trim();
+      console.warn(`[env] Using ${alias} as MONGODB_URI (rename it to MONGODB_URI on Render when you can).`);
+      return;
+    }
+  }
+}
+
+function logProdEnvChecklist() {
+  const rows = [
+    ['NODE_ENV', isSet('NODE_ENV')],
+    ['MONGODB_URI', isSet('MONGODB_URI')],
+    ['MONGODB_USER', isSet('MONGODB_USER')],
+    ['MONGODB_PASSWORD', isSet('MONGODB_PASSWORD')],
+    ['JWT_SECRET', isSet('JWT_SECRET')],
+    ['FRONTEND_URL', isSet('FRONTEND_URL')],
+    ['API_BASE_URL', isSet('API_BASE_URL')],
+  ];
+  console.log('[env] Production checklist (names only, values hidden):');
+  for (const [name, ok] of rows) {
+    console.log(`[env]   ${ok ? 'OK ' : 'MISSING'}  ${name}`);
+  }
+}
+
 function validateEnv() {
+  normalizeMongoEnvAliases();
+
   const isProd = process.env.NODE_ENV === 'production';
   const secret = process.env.JWT_SECRET;
 
   if (isProd) {
+    logProdEnvChecklist();
+
     if (!secret || typeof secret !== 'string' || secret.trim().length < MIN_JWT_SECRET_LENGTH) {
       console.error(
         `[env] FATAL: JWT_SECRET must be set and at least ${MIN_JWT_SECRET_LENGTH} characters in production.`
@@ -28,20 +68,20 @@ function validateEnv() {
       );
       process.exit(1);
     }
-    const hasMongoUri = process.env.MONGODB_URI && String(process.env.MONGODB_URI).trim();
-    const hasUserPass =
-      process.env.MONGODB_USER &&
-      String(process.env.MONGODB_USER).trim() &&
-      process.env.MONGODB_PASSWORD &&
-      String(process.env.MONGODB_PASSWORD).trim();
+    const hasMongoUri = isSet('MONGODB_URI');
+    const hasUserPass = isSet('MONGODB_USER') && isSet('MONGODB_PASSWORD');
     if (!hasMongoUri && !hasUserPass) {
+      console.error('[env] FATAL: MongoDB is not configured on this host.');
+      console.error('[env] On Render → your API service → Environment → Add Environment Variable:');
+      console.error('[env]   Key:   MONGODB_URI');
       console.error(
-        '[env] FATAL: Set MONGODB_URI or MONGODB_USER + MONGODB_PASSWORD (+ optional MONGODB_CLUSTER_HOST) in production.'
+        '[env]   Value: mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/house_rental?retryWrites=true&w=majority'
       );
+      console.error('[env] Then click Save Changes (Render will redeploy). Local backend/.env is NOT uploaded.');
       process.exit(1);
     }
-    if (!process.env.FRONTEND_URL || !String(process.env.FRONTEND_URL).trim()) {
-      console.error('[env] FATAL: FRONTEND_URL is required in production.');
+    if (!isSet('FRONTEND_URL')) {
+      console.error('[env] FATAL: FRONTEND_URL is required in production (your Vercel URL, no trailing slash).');
       process.exit(1);
     }
     return;
@@ -59,4 +99,4 @@ function validateEnv() {
   }
 }
 
-module.exports = { validateEnv };
+module.exports = { validateEnv, normalizeMongoEnvAliases };
