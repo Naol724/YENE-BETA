@@ -35,11 +35,28 @@ export function parseApiErrorMessage(err: unknown): string | null {
 export function networkErrorHint(err: unknown): string | null {
   if (!axios.isAxiosError(err)) return null;
   if (err.response != null) return null;
+
+  const configured =
+    typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
+      ? String(import.meta.env.VITE_API_URL).trim()
+      : '';
+  const target = configured || 'http://localhost:5000/api (fallback)';
+  const isLocalTarget = /localhost|127\.0\.0\.1/i.test(target);
+
   if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-    return 'Cannot reach the API. Start the YENE BET backend (npm run api), confirm VITE_API_URL in frontend/.env matches the API port, then restart Vite.';
+    if (isLocalTarget) {
+      return (
+        `Cannot reach the API at ${target}. On Vercel set VITE_API_URL to your Render URL ending in /api ` +
+        `(example: https://your-api.onrender.com/api), then Redeploy. Also set FRONTEND_URL on Render to your Vercel site URL.`
+      );
+    }
+    return (
+      `Cannot reach the API at ${target}. Open that URL + /health in a browser (should return JSON). ` +
+      `If it works, check Render FRONTEND_URL matches your Vercel origin exactly (CORS).`
+    );
   }
   if (err.code === 'ECONNABORTED') {
-    return 'Request timed out. Check your connection and that the API is running.';
+    return `Request timed out talking to ${target}. Free Render apps sleep — wait ~30s and try again.`;
   }
-  return 'Cannot reach the API. Start the backend (npm run api) and check VITE_API_URL in frontend/.env.';
+  return `Cannot reach the API at ${target}. Check VITE_API_URL on Vercel and FRONTEND_URL on Render.`;
 }
