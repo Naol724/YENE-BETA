@@ -8,17 +8,24 @@ function isEmailConfigured() {
   return !!(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS);
 }
 
+/** jsonwebtoken rejects empty/undefined expiresIn — use sane defaults for Render when env is missing. */
+function jwtExpiresIn(envValue, fallback) {
+  const v = envValue == null ? '' : String(envValue).trim();
+  return v || fallback;
+}
+
 // Generate Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn: jwtExpiresIn(process.env.JWT_EXPIRE, '7d'),
   });
 };
 
 // Generate Refresh Token
 const generateRefreshToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRE,
+  const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+  return jwt.sign({ id }, secret, {
+    expiresIn: jwtExpiresIn(process.env.JWT_REFRESH_EXPIRE, '30d'),
   });
 };
 
